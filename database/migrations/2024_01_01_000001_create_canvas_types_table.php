@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('icon', 100)->nullable();
             $table->json('block_definitions');
             $table->json('layout');
-            $table->json('entry_types')->default('["text"]');
+            $table->json('entry_types')->nullable();
             $table->json('analysis_config')->nullable();
             $table->enum('origin', ['system', 'custom'])->default('custom');
             $table->boolean('is_active')->default(true);

@@ -33,6 +33,10 @@ class CanvasType extends Model
         'created_by_user_id',
     ];
 
+    protected $attributes = [
+        'entry_types' => '["text"]',
+    ];
+
     protected $casts = [
         'block_definitions' => 'array',
         'layout' => 'array',
