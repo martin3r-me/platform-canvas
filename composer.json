@@ -1,0 +1,30 @@
+{
+    "name": "martin3r/platforms-canvas",
+    "description": "Generic Canvas Module for Platform",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Platform Team",
+            "email": "team@platform.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Platform\\Canvas\\": "src/",
+            "Platform\\Canvas\\Database\\": "database/"
+        }
+    },
+    "require": {
+        "barryvdh/laravel-dompdf": "^3.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Platform\\Canvas\\CanvasServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
