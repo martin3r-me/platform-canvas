@@ -2,12 +2,10 @@
 
 namespace Platform\Canvas;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
-use Platform\Canvas\Models\Canvas;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
 use RecursiveDirectoryIterator;
@@ -22,11 +20,6 @@ class CanvasServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Morph map for entity links
-        Relation::morphMap([
-            'canvas' => Canvas::class,
-        ]);
-
         // Step 1: Load config
         $this->mergeConfigFrom(__DIR__ . '/../config/canvas.php', 'canvas');
 
