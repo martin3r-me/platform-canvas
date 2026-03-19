@@ -68,12 +68,15 @@
                                       :class="open ? 'rotate-90' : ''">
                                     @svg('heroicon-o-chevron-right', 'w-3 h-3')
                                 </span>
-                                @php $icon = $typeGroup['type_icon'] ?? null; @endphp
-                                @if($icon && str_starts_with($icon, 'heroicon-'))
-                                    @svg($icon, 'w-4 h-4 flex-shrink-0 ml-1 text-[var(--ui-muted)]')
-                                @else
-                                    @svg('heroicon-o-rectangle-group', 'w-4 h-4 flex-shrink-0 ml-1 text-[var(--ui-muted)]')
-                                @endif
+                                @php
+                                    $rawIcon = $typeGroup['type_icon'] ?? null;
+                                    $safeIcon = null;
+                                    if ($rawIcon) {
+                                        $safeIcon = str_starts_with($rawIcon, 'heroicon-') ? $rawIcon : 'heroicon-' . $rawIcon;
+                                        try { svg($safeIcon); } catch (\Throwable $e) { $safeIcon = null; }
+                                    }
+                                @endphp
+                                @svg($safeIcon ?? 'heroicon-o-rectangle-group', 'w-4 h-4 flex-shrink-0 ml-1 text-[var(--ui-muted)]')
                                 <span class="ml-1.5 text-sm font-medium truncate">{{ $entityGroup['entity_name'] }}</span>
                                 <span class="ml-auto text-xs text-[var(--ui-muted)]">{{ $entityGroup['canvases']->count() }}</span>
                             </button>
