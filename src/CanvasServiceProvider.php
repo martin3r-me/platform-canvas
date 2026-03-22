@@ -2,6 +2,7 @@
 
 namespace Platform\Canvas;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -20,6 +21,10 @@ class CanvasServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Relation::morphMap([
+            'canvas' => \Platform\Canvas\Models\Canvas::class,
+        ]);
+
         // Step 1: Load config
         $this->mergeConfigFrom(__DIR__ . '/../config/canvas.php', 'canvas');
 
