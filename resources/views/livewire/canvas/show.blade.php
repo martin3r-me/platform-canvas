@@ -256,53 +256,203 @@
                     </div>
                 </div>
                 @endif
+
+                {{-- Recommendations (completeness) --}}
+                @if(($analysisData['strategy'] ?? null) === 'completeness')
+                    @if(!empty($analysisData['missing_blocks'] ?? []))
+                    <div>
+                        <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Fehlende Bloecke</h3>
+                        <div class="space-y-3">
+                            @foreach($analysisData['missing_blocks'] as $missing)
+                            <div class="p-3 rounded-lg bg-[var(--ui-muted-5)]/50 border border-[var(--ui-border)]/40">
+                                <div class="text-xs font-semibold text-[var(--ui-secondary)] mb-1.5">{{ $missing['label'] }}</div>
+                                <ul class="space-y-1">
+                                    @foreach($missing['guiding_questions'] ?? [] as $question)
+                                    <li class="text-[11px] text-[var(--ui-muted)] d-flex items-start gap-1.5">
+                                        @svg('heroicon-o-question-mark-circle', 'w-3 h-3 mt-0.5 flex-shrink-0')
+                                        {{ $question }}
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($analysisData['recommendations'] ?? []))
+                    <div>
+                        <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Hinweise</h3>
+                        <div class="space-y-2">
+                            @foreach($analysisData['recommendations'] as $rec)
+                            <div class="d-flex items-start gap-2 p-2 rounded-md bg-yellow-500/10 border border-yellow-500/20">
+                                @svg('heroicon-o-light-bulb', 'w-3.5 h-3.5 text-yellow-600 mt-0.5 flex-shrink-0')
+                                <span class="text-[11px] text-[var(--ui-secondary)]">{{ $rec }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                @endif
             </div>
         </x-ui-page-sidebar>
     </x-slot>
 
-    {{-- Right Sidebar (completeness recommendations) --}}
-    @if(($analysisData['strategy'] ?? null) === 'completeness')
+    {{-- Right Sidebar: Kommentare --}}
     <x-slot name="activity">
-        <x-ui-page-sidebar title="Empfehlungen" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
-            <div class="p-5 space-y-5">
-                {{-- Missing Blocks --}}
-                @if(!empty($analysisData['missing_blocks'] ?? []))
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Fehlende Bloecke</h3>
-                    <div class="space-y-3">
-                        @foreach($analysisData['missing_blocks'] as $missing)
-                        <div class="p-3 rounded-lg bg-[var(--ui-muted-5)]/50 border border-[var(--ui-border)]/40">
-                            <div class="text-xs font-semibold text-[var(--ui-secondary)] mb-1.5">{{ $missing['label'] }}</div>
-                            <ul class="space-y-1">
-                                @foreach($missing['guiding_questions'] ?? [] as $question)
-                                <li class="text-[11px] text-[var(--ui-muted)] d-flex items-start gap-1.5">
-                                    @svg('heroicon-o-question-mark-circle', 'w-3 h-3 mt-0.5 flex-shrink-0')
-                                    {{ $question }}
-                                </li>
-                                @endforeach
-                            </ul>
-                        </div>
+        <x-ui-page-sidebar title="Kommentare ({{ $allComments->count() }})" width="w-96" :defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-4 space-y-4">
+                {{-- Block Filter Chips --}}
+                <div class="overflow-x-auto -mx-4 px-4">
+                    <div class="flex items-center gap-1.5 flex-nowrap">
+                        <button
+                            wire:click="filterByBlock(null)"
+                            class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ !$filterBlockId ? 'bg-[rgb(var(--ui-primary-rgb))] text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                        >
+                            Alle
+                        </button>
+                        @foreach($canvas->buildingBlocks as $block)
+                            @php $blockCount = $allComments->where('building_block_id', $block->id)->count(); @endphp
+                            @if($blockCount > 0)
+                            <button
+                                wire:click="filterByBlock({{ $block->id }})"
+                                class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ $filterBlockId === $block->id ? 'bg-[rgb(var(--ui-primary-rgb))] text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                            >
+                                {{ $block->label }} ({{ $blockCount }})
+                            </button>
+                            @endif
                         @endforeach
                     </div>
                 </div>
-                @endif
 
-                {{-- Recommendations --}}
-                @if(!empty($analysisData['recommendations'] ?? []))
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Hinweise</h3>
-                    <div class="space-y-2">
-                        @foreach($analysisData['recommendations'] as $rec)
-                        <div class="d-flex items-start gap-2 p-2 rounded-md bg-yellow-500/10 border border-yellow-500/20">
-                            @svg('heroicon-o-light-bulb', 'w-3.5 h-3.5 text-yellow-600 mt-0.5 flex-shrink-0')
-                            <span class="text-[11px] text-[var(--ui-secondary)]">{{ $rec }}</span>
+                {{-- Comment Form --}}
+                <form wire:submit="addComment" class="space-y-2">
+                    @if($replyToId)
+                        @php $replyTarget = $comments->firstWhere('id', $replyToId); @endphp
+                        <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[rgb(var(--ui-primary-rgb))]/5 border border-[rgb(var(--ui-primary-rgb))]/20">
+                            @svg('heroicon-o-arrow-uturn-left', 'w-3 h-3 text-[rgb(var(--ui-primary-rgb))] shrink-0')
+                            <span class="text-[10px] text-[var(--ui-secondary)] truncate grow">
+                                Antwort auf: {{ Str::limit($replyTarget?->content ?? '', 50) }}
+                            </span>
+                            <button type="button" wire:click="cancelReply" class="shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
+                                @svg('heroicon-o-x-mark', 'w-3 h-3')
+                            </button>
                         </div>
-                        @endforeach
+                    @elseif($commentBlockId)
+                        @php $selectedBlock = $canvas->buildingBlocks->firstWhere('id', $commentBlockId); @endphp
+                        <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/30">
+                            @svg('heroicon-o-cube', 'w-3 h-3 text-[var(--ui-muted)] shrink-0')
+                            <span class="text-[10px] text-[var(--ui-secondary)] grow">{{ $selectedBlock?->label ?? 'Block' }}</span>
+                            <button type="button" wire:click="$set('commentBlockId', null)" class="shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
+                                @svg('heroicon-o-x-mark', 'w-3 h-3')
+                            </button>
+                        </div>
+                    @else
+                        <select wire:model="commentBlockId" class="w-full text-[11px] rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-[var(--ui-secondary)] px-2.5 py-1.5 focus:ring-1 focus:ring-[rgb(var(--ui-primary-rgb))]">
+                            <option value="">Canvas-weiter Kommentar</option>
+                            @foreach($canvas->buildingBlocks as $block)
+                                <option value="{{ $block->id }}">{{ $block->label }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+
+                    <div class="flex gap-2">
+                        <textarea
+                            wire:model="commentContent"
+                            rows="2"
+                            placeholder="{{ $replyToId ? 'Antwort schreiben...' : 'Kommentar schreiben...' }}"
+                            class="grow rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-xs text-[var(--ui-secondary)] p-2.5 resize-none focus:ring-1 focus:ring-[rgb(var(--ui-primary-rgb))]"
+                        ></textarea>
+                        <button
+                            type="submit"
+                            class="shrink-0 self-end px-3 py-2 rounded-lg bg-[rgb(var(--ui-primary-rgb))] text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                            wire:loading.attr="disabled"
+                        >
+                            @svg('heroicon-o-paper-airplane', 'w-4 h-4')
+                        </button>
                     </div>
+                    @error('commentContent')
+                        <p class="text-[10px] text-red-500">{{ $message }}</p>
+                    @enderror
+                </form>
+
+                {{-- Comments List --}}
+                <div class="space-y-3">
+                    @forelse($comments as $comment)
+                        <div class="space-y-2">
+                            {{-- Root Comment --}}
+                            <div class="rounded-lg border border-[var(--ui-border)]/30 bg-[var(--ui-bg)] p-3 hover:border-[var(--ui-border)]/50 transition-colors">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    @if($comment->building_block_id)
+                                        <span class="flex items-center gap-1 text-[9px] font-medium text-[rgb(var(--ui-primary-rgb))] bg-[rgb(var(--ui-primary-rgb))]/10 rounded px-1.5 py-0.5">
+                                            @svg('heroicon-o-cube', 'w-2.5 h-2.5')
+                                            {{ $comment->buildingBlock?->label ?? 'Block' }}
+                                        </span>
+                                    @else
+                                        <span class="text-[9px] font-medium text-[var(--ui-muted)] bg-[var(--ui-muted-5)] rounded px-1.5 py-0.5">Canvas-weit</span>
+                                    @endif
+                                    <span class="text-[10px] text-[var(--ui-muted)]/60 ml-auto">{{ $comment->created_at->format('d.m. H:i') }}</span>
+                                </div>
+                                <p class="text-xs text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $comment->content }}</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <button
+                                        wire:click="setReplyTo({{ $comment->id }})"
+                                        class="flex items-center gap-1 text-[10px] text-[var(--ui-muted)] hover:text-[rgb(var(--ui-primary-rgb))] transition-colors"
+                                    >
+                                        @svg('heroicon-o-arrow-uturn-left', 'w-3 h-3')
+                                        Antworten
+                                    </button>
+                                    @if($comment->replies->count() > 0)
+                                        <span class="text-[10px] text-[var(--ui-muted)]/60">
+                                            {{ $comment->replies->count() }} {{ $comment->replies->count() === 1 ? 'Antwort' : 'Antworten' }}
+                                        </span>
+                                    @endif
+                                    <button
+                                        wire:click="deleteComment({{ $comment->id }})"
+                                        wire:confirm="Kommentar und alle Antworten loeschen?"
+                                        class="flex items-center gap-1 text-[10px] text-[var(--ui-muted)] hover:text-red-500 transition-colors ml-auto"
+                                    >
+                                        @svg('heroicon-o-trash', 'w-3 h-3')
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Replies --}}
+                            @if($comment->replies->count() > 0)
+                                <div class="ml-4 space-y-2 border-l-2 border-[var(--ui-border)]/20 pl-3">
+                                    @foreach($comment->replies as $reply)
+                                        <div class="rounded-lg border border-[var(--ui-border)]/20 bg-[var(--ui-muted-5)]/30 p-2.5 group/reply">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-[10px] text-[var(--ui-muted)]/60">{{ $reply->created_at->format('d.m. H:i') }}</span>
+                                                <button
+                                                    wire:click="deleteComment({{ $reply->id }})"
+                                                    wire:confirm="Antwort loeschen?"
+                                                    class="ml-auto opacity-0 group-hover/reply:opacity-100 text-[var(--ui-muted)] hover:text-red-500 transition-all"
+                                                >
+                                                    @svg('heroicon-o-trash', 'w-3 h-3')
+                                                </button>
+                                            </div>
+                                            <p class="text-[11px] text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $reply->content }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="text-center py-8">
+                            @svg('heroicon-o-chat-bubble-left-right', 'w-8 h-8 text-[var(--ui-muted)]/30 mx-auto mb-3')
+                            <p class="text-xs text-[var(--ui-muted)]/60">
+                                {{ $filterBlockId ? 'Keine Kommentare fuer diesen Block.' : 'Noch keine Kommentare.' }}
+                            </p>
+                            @if($filterBlockId)
+                                <button wire:click="filterByBlock(null)" class="mt-2 text-[10px] text-[rgb(var(--ui-primary-rgb))] hover:opacity-80">
+                                    Alle Kommentare anzeigen
+                                </button>
+                            @endif
+                        </div>
+                    @endforelse
                 </div>
-                @endif
             </div>
         </x-ui-page-sidebar>
     </x-slot>
-    @endif
 </x-ui-page>
