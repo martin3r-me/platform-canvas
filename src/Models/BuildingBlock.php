@@ -43,6 +43,11 @@ class BuildingBlock extends Model
         return $this->hasMany(Entry::class, 'building_block_id')->orderBy('position');
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(CanvasComment::class, 'building_block_id');
+    }
+
     // Scopes
 
     public function scopeByKey($query, string $key)

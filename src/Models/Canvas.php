@@ -23,6 +23,8 @@ class Canvas extends Model
         'name',
         'description',
         'status',
+        'public_token',
+        'is_public',
         'contextable_type',
         'contextable_id',
         'created_by_user_id',
@@ -30,6 +32,7 @@ class Canvas extends Model
 
     protected $casts = [
         'status' => 'string',
+        'is_public' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -76,6 +79,11 @@ class Canvas extends Model
         return $this->hasMany(CanvasSnapshot::class, 'canvas_id')->orderBy('version', 'desc');
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(CanvasComment::class, 'canvas_id');
+    }
+
     // Scopes
 
     public function scopeForTeam($query, int $teamId)
@@ -91,6 +99,29 @@ class Canvas extends Model
     public function scopeOfType($query, string $typeKey)
     {
         return $query->whereHas('canvasType', fn ($q) => $q->where('key', $typeKey));
+    }
+
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true)->whereNotNull('public_token');
+    }
+
+    public function generatePublicToken(): string
+    {
+        $this->public_token = bin2hex(random_bytes(16));
+        $this->is_public = true;
+        $this->save();
+
+        return $this->public_token;
+    }
+
+    public function getPublicUrl(): ?string
+    {
+        if (! $this->public_token) {
+            return null;
+        }
+
+        return route('canvas.public.show', $this->public_token);
     }
 
     /**

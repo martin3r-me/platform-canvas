@@ -31,6 +31,16 @@ class Show extends Component
         ]);
     }
 
+    public function createPublicLink(): void
+    {
+        $this->canvas->generatePublicToken();
+    }
+
+    public function togglePublicLink(): void
+    {
+        $this->canvas->update(['is_public' => ! $this->canvas->is_public]);
+    }
+
     public function render()
     {
         $this->canvas->load(['canvasType', 'buildingBlocks.entries', 'createdByUser', 'snapshots']);

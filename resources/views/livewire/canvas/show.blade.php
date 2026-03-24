@@ -17,6 +17,38 @@
                         <span>PDF Export</span>
                     </x-ui-button>
                 </a>
+
+                @if($canvas->public_token)
+                    <div class="d-flex items-center gap-1" x-data="{ copied: false }">
+                        <x-ui-button
+                            variant="{{ $canvas->is_public ? 'primary' : 'ghost' }}"
+                            size="sm"
+                            wire:click="togglePublicLink"
+                        >
+                            @svg('heroicon-o-globe-alt', 'w-4 h-4')
+                            <span>{{ $canvas->is_public ? 'Public Link aktiv' : 'Public Link inaktiv' }}</span>
+                        </x-ui-button>
+                        @if($canvas->is_public)
+                            <x-ui-button
+                                variant="ghost"
+                                size="sm"
+                                x-on:click="navigator.clipboard.writeText('{{ $canvas->getPublicUrl() }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                            >
+                                <template x-if="!copied">
+                                    @svg('heroicon-o-clipboard', 'w-4 h-4')
+                                </template>
+                                <template x-if="copied">
+                                    @svg('heroicon-o-check', 'w-4 h-4 text-green-500')
+                                </template>
+                            </x-ui-button>
+                        @endif
+                    </div>
+                @else
+                    <x-ui-button variant="ghost" size="sm" wire:click="createPublicLink">
+                        @svg('heroicon-o-link', 'w-4 h-4')
+                        <span>Public Link erstellen</span>
+                    </x-ui-button>
+                @endif
             </x-slot>
         </x-ui-page-actionbar>
     </x-slot>

@@ -49,6 +49,11 @@ class CanvasServiceProvider extends ServiceProvider
             ModuleRouter::group('canvas', function () {
                 $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
             });
+
+            // Public routes (without auth)
+            ModuleRouter::group('canvas', function () {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/public.php');
+            }, requireAuth: false);
         }
 
         // Step 4: Migrations
