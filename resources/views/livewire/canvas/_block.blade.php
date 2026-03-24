@@ -8,7 +8,7 @@
     $entryCount = count($entries);
 @endphp
 
-<div class="rounded-xl border border-[var(--ui-border)]/50 bg-[var(--ui-surface)] flex flex-col overflow-hidden shadow-sm break-inside-avoid">
+<div class="w-full rounded-xl border border-[var(--ui-border)]/50 bg-[var(--ui-surface)] flex flex-col overflow-hidden shadow-sm">
     {{-- Header --}}
     <div class="flex items-center justify-between px-4 py-2.5 border-b border-[var(--ui-border)]/30 bg-[var(--ui-muted-5)]/30">
         <h4 class="text-xs font-bold text-[var(--ui-secondary)] uppercase tracking-wider truncate">{{ $label }}</h4>

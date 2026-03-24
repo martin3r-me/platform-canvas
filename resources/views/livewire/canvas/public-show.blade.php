@@ -91,6 +91,8 @@
                         @endif
                     </div>
                 @endforeach
+                {{-- Spacer so the last block can scroll to top and get highlighted --}}
+                <div class="h-[60vh]"></div>
             </div>
         </div>
 
