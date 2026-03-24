@@ -77,7 +77,7 @@
 
     {{-- Main Content: Blocks full-width stacked --}}
     <x-ui-page-container>
-        <div class="max-w-5xl mx-auto space-y-6 py-6">
+        <div class="space-y-6 py-6">
             @foreach($blockDefs as $def)
                 <div id="block-{{ $def['key'] }}" class="scroll-mt-24" data-block>
                     @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])

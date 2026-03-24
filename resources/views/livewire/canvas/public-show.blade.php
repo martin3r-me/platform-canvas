@@ -58,7 +58,7 @@
     <div class="grow flex min-h-0">
         {{-- Canvas Area --}}
         <div class="grow min-w-0 overflow-y-auto" id="canvas-scroll-area">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            <div class="px-4 sm:px-6 py-6 space-y-6">
                 @foreach($blockDefs as $def)
                     @php
                         $blockKey = $def['key'];
