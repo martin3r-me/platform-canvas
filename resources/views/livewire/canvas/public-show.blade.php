@@ -3,10 +3,16 @@
     <div class="shrink-0 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm z-30">
         <div class="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div class="min-w-0 grow">
-                <h1 class="text-lg font-bold text-[var(--ui-secondary)] truncate">{{ $canvas->name }}</h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-lg font-bold text-[var(--ui-secondary)] truncate">{{ $canvas->name }}</h1>
+                    @if($canvas->canvasType)
+                        <span class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                            @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
+                            {{ $canvas->canvasType->name }}
+                        </span>
+                    @endif
+                </div>
                 <div class="flex items-center gap-2 mt-0.5 text-xs text-[var(--ui-muted)]">
-                    <span>{{ $canvas->canvasType?->name ?? 'Canvas' }}</span>
-                    <span class="opacity-40">&middot;</span>
                     <span>{{ $canvas->updated_at?->format('d.m.Y H:i') }}</span>
                     @if($canvas->description)
                         <span class="opacity-40">&middot;</span>
@@ -30,6 +36,10 @@
     <div class="shrink-0 border-b border-[var(--ui-border)]/30 bg-[var(--ui-surface)]/80 backdrop-blur-sm z-20">
         <div class="px-4 sm:px-6 overflow-x-auto">
             <div class="flex items-center gap-1 py-2">
+                @if($canvas->canvasType)
+                    <span class="shrink-0 text-[11px] font-bold text-blue-600 uppercase tracking-wider mr-2">{{ $canvas->canvasType->name }}</span>
+                    <span class="shrink-0 w-px h-4 bg-[var(--ui-border)]/40 mr-1"></span>
+                @endif
                 @foreach($blockDefs as $def)
                     @php
                         $blockKey = $def['key'];
