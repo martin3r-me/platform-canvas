@@ -11,12 +11,10 @@
             ['label' => $canvas->name],
         ]">
             <x-slot name="left">
-                @if($canvas->canvasType)
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[rgb(var(--ui-primary-rgb))]/10 text-[rgb(var(--ui-primary-rgb))] border border-[rgb(var(--ui-primary-rgb))]/20">
-                        @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
-                        {{ $canvas->canvasType->name }}
-                    </span>
-                @endif
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[rgb(var(--ui-primary-rgb))]/10 text-[rgb(var(--ui-primary-rgb))] border border-[rgb(var(--ui-primary-rgb))]/20">
+                    @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
+                    {{ $canvas->canvasType?->name ?? 'Canvas' }}
+                </span>
                 <a href="{{ route('canvas.canvases.pdf', $canvas) }}" target="_blank">
                     <x-ui-button variant="ghost" size="sm">
                         @svg('heroicon-o-arrow-down-tray', 'w-4 h-4')
@@ -66,10 +64,8 @@
             <div class="sticky top-0 z-20 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
                 <div class="px-4 sm:px-6 overflow-x-auto">
                     <div class="flex items-center gap-1 py-2">
-                        @if($canvas->canvasType)
-                            <span class="shrink-0 text-[11px] font-bold text-[rgb(var(--ui-primary-rgb))] uppercase tracking-wider mr-2">{{ $canvas->canvasType->name }}</span>
-                            <span class="shrink-0 w-px h-4 bg-[var(--ui-border)]/40 mr-1"></span>
-                        @endif
+                        <span class="shrink-0 text-[11px] font-bold text-[rgb(var(--ui-primary-rgb))] uppercase tracking-wider mr-2">{{ $canvas->canvasType?->name ?? 'Canvas' }}</span>
+                        <span class="shrink-0 w-px h-4 bg-[var(--ui-border)]/40 mr-1"></span>
                         @foreach($blockDefs as $def)
                             @php
                                 $blockKey = $def['key'];

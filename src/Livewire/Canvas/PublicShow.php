@@ -20,6 +20,7 @@ class PublicShow extends Component
         $this->canvas = Canvas::where('public_token', $token)
             ->where('is_public', true)
             ->firstOrFail();
+        $this->canvas->loadMissing('canvasType');
     }
 
     public function addComment(): void

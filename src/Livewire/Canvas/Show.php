@@ -19,6 +19,7 @@ class Show extends Component
     public function mount(Canvas $canvas): void
     {
         abort_unless($canvas->team_id === Auth::user()->currentTeam->id, 403);
+        $canvas->loadMissing('canvasType');
         $this->canvas = $canvas;
     }
 
