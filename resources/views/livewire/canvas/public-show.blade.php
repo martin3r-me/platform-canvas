@@ -1,4 +1,4 @@
-<div class="h-screen flex flex-col bg-[var(--ui-bg)]" x-data="{ commentsOpen: true }">
+<div class="h-screen flex flex-col bg-[var(--ui-bg)]" x-data="{ commentsOpen: true, activeBlock: '', ...blockNav() }" x-init="initBlockNav()">
     {{-- Header --}}
     <div class="shrink-0 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm z-30">
         <div class="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -26,116 +26,72 @@
         </div>
     </div>
 
+    {{-- Block Navigation --}}
+    <div class="shrink-0 border-b border-[var(--ui-border)]/30 bg-[var(--ui-surface)]/80 backdrop-blur-sm z-20">
+        <div class="px-4 sm:px-6 overflow-x-auto">
+            <div class="flex items-center gap-1 py-2">
+                @foreach($blockDefs as $def)
+                    @php
+                        $blockKey = $def['key'];
+                        $config = collect($blockDefs)->firstWhere('key', $blockKey) ?? [];
+                        $label = $config['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
+                        $blockData = $canvasData['blocks'][$blockKey] ?? null;
+                        $blockCommentCount = $blockData ? $allComments->where('building_block_id', $blockData['id'])->count() : 0;
+                    @endphp
+                    <button
+                        x-on:click="scrollToBlock('pub-block-{{ $blockKey }}')"
+                        :class="activeBlock === 'pub-block-{{ $blockKey }}' ? 'bg-blue-500 text-white shadow-sm' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]'"
+                        class="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5"
+                    >
+                        {{ $label }}
+                        @if($blockCommentCount > 0)
+                            <span class="inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-bold"
+                                  :class="activeBlock === 'pub-block-{{ $blockKey }}' ? 'bg-white/30 text-white' : 'bg-blue-500/10 text-blue-500'">{{ $blockCommentCount }}</span>
+                        @endif
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
     {{-- Body: Canvas + Sidebar --}}
     <div class="grow flex min-h-0">
         {{-- Canvas Area --}}
-        <div class="grow min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            @php
-                $hasAreas = !empty($layout['areas'] ?? null) && !empty($layout['area_map'] ?? null);
-                $columns = $layout['columns'] ?? 3;
-                $rows = $layout['rows'] ?? 3;
-            @endphp
-
-            @if($hasAreas)
-                @php
-                    $areasRows = array_map('trim', explode('/', $layout['areas']));
-                    $cssAreas = collect($areasRows)->map(fn($row) => "'" . $row . "'")->implode(' ');
-                    $areaMap = $layout['area_map'];
-                @endphp
-                {{-- Desktop: area grid --}}
-                <div class="hidden lg:grid gap-3" style="grid-template-columns: repeat({{ $columns }}, 1fr); grid-template-rows: {{ str_repeat('auto ', $rows) }}; grid-template-areas: {{ $cssAreas }};">
-                    @foreach($blockDefs as $def)
-                        @php
-                            $blockKey = $def['key'];
-                            $areaName = $areaMap[$blockKey] ?? null;
-                            $blockData = $canvasData['blocks'][$blockKey] ?? null;
-                            $blockCommentCount = $blockData ? $allComments->where('building_block_id', $blockData['id'])->count() : 0;
-                        @endphp
-                        @if($areaName)
-                        <div style="grid-area: {{ $areaName }};" class="relative group">
-                            @include('canvas::livewire.canvas._block', ['blockKey' => $blockKey, 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                            @if($blockCommentCount > 0)
-                                <button
-                                    wire:click="filterByBlock({{ $blockData['id'] }})"
-                                    x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
-                                >
-                                    @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
-                                    {{ $blockCommentCount }}
-                                </button>
-                            @endif
-                            @if($blockData)
+        <div class="grow min-w-0 overflow-y-auto" id="canvas-scroll-area">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+                @foreach($blockDefs as $def)
+                    @php
+                        $blockKey = $def['key'];
+                        $blockData = $canvasData['blocks'][$blockKey] ?? null;
+                        $blockCommentCount = $blockData ? $allComments->where('building_block_id', $blockData['id'])->count() : 0;
+                    @endphp
+                    <div id="pub-block-{{ $blockKey }}" class="relative group scroll-mt-4" data-pub-block>
+                        @include('canvas::livewire.canvas._block', ['blockKey' => $blockKey, 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
+                        @if($blockData)
+                            <div class="absolute top-2 right-2 flex items-center gap-1">
+                                @if($blockCommentCount > 0)
+                                    <button
+                                        wire:click="filterByBlock({{ $blockData['id'] }})"
+                                        x-on:click="commentsOpen = true"
+                                        class="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
+                                    >
+                                        @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
+                                        {{ $blockCommentCount }}
+                                    </button>
+                                @endif
                                 <button
                                     wire:click="$set('commentBlockId', {{ $blockData['id'] }})"
                                     x-on:click="commentsOpen = true"
-                                    class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-lg bg-[var(--ui-surface)] border border-[var(--ui-border)]/60 text-[var(--ui-muted)] hover:text-blue-500 shadow-sm"
+                                    class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-lg bg-[var(--ui-surface)] border border-[var(--ui-border)]/60 text-[var(--ui-muted)] hover:text-blue-500 shadow-sm"
                                     title="Kommentar zu diesem Block"
                                 >
                                     @svg('heroicon-o-chat-bubble-left', 'w-3.5 h-3.5')
                                 </button>
-                            @endif
-                        </div>
+                            </div>
                         @endif
-                    @endforeach
-                </div>
-                {{-- Mobile/Tablet fallback: masonry --}}
-                <div class="columns-1 md:columns-2 gap-3 space-y-3 lg:hidden">
-                    @foreach($blockDefs as $def)
-                        @php
-                            $blockKey = $def['key'];
-                            $blockData = $canvasData['blocks'][$blockKey] ?? null;
-                            $blockCommentCount = $blockData ? $allComments->where('building_block_id', $blockData['id'])->count() : 0;
-                        @endphp
-                        <div class="relative group">
-                            @include('canvas::livewire.canvas._block', ['blockKey' => $blockKey, 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                            @if($blockCommentCount > 0)
-                                <button
-                                    wire:click="filterByBlock({{ $blockData['id'] }})"
-                                    x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
-                                >
-                                    @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
-                                    {{ $blockCommentCount }}
-                                </button>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                {{-- Simple layout: masonry --}}
-                <div class="columns-1 md:columns-2 lg:columns-{{ $columns }} gap-3 space-y-3">
-                    @foreach($blockDefs as $def)
-                        @php
-                            $blockKey = $def['key'];
-                            $blockData = $canvasData['blocks'][$blockKey] ?? null;
-                            $blockCommentCount = $blockData ? $allComments->where('building_block_id', $blockData['id'])->count() : 0;
-                        @endphp
-                        <div class="relative group">
-                            @include('canvas::livewire.canvas._block', ['blockKey' => $blockKey, 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                            @if($blockCommentCount > 0)
-                                <button
-                                    wire:click="filterByBlock({{ $blockData['id'] }})"
-                                    x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
-                                >
-                                    @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
-                                    {{ $blockCommentCount }}
-                                </button>
-                            @endif
-                            @if($blockData)
-                                <button
-                                    wire:click="$set('commentBlockId', {{ $blockData['id'] }})"
-                                    x-on:click="commentsOpen = true"
-                                    class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-lg bg-[var(--ui-surface)] border border-[var(--ui-border)]/60 text-[var(--ui-muted)] hover:text-blue-500 shadow-sm"
-                                    title="Kommentar zu diesem Block"
-                                >
-                                    @svg('heroicon-o-chat-bubble-left', 'w-3.5 h-3.5')
-                                </button>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         {{-- Comment Sidebar --}}
@@ -337,4 +293,31 @@
             x-cloak
         ></div>
     </div>
+
+    <script>
+    function blockNav() {
+        return {
+            _observer: null,
+            initBlockNav() {
+                this.$nextTick(() => {
+                    const scrollArea = document.getElementById('canvas-scroll-area');
+                    const blocks = scrollArea?.querySelectorAll('[data-pub-block]');
+                    if (!blocks || !blocks.length) return;
+                    this.activeBlock = blocks[0]?.id || '';
+                    this._observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                this.activeBlock = entry.target.id;
+                            }
+                        });
+                    }, { root: scrollArea, rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+                    blocks.forEach(block => this._observer.observe(block));
+                });
+            },
+            scrollToBlock(id) {
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+    </script>
 </div>

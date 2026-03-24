@@ -53,52 +53,65 @@
         </x-ui-page-actionbar>
     </x-slot>
 
-    {{-- Main Content --}}
-    <x-ui-page-container>
-        <div class="space-y-4">
-            @php
-                $hasAreas = !empty($layout['areas'] ?? null) && !empty($layout['area_map'] ?? null);
-                $columns = $layout['columns'] ?? 3;
-                $rows = $layout['rows'] ?? 3;
-            @endphp
+    {{-- Block Navigation --}}
+    <div x-data="blockNav()" x-init="init()" class="sticky top-0 z-20 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 overflow-x-auto">
+            <div class="flex items-center gap-1 py-2">
+                @foreach($blockDefs as $def)
+                    @php
+                        $blockKey = $def['key'];
+                        $config = collect($blockDefs)->firstWhere('key', $blockKey) ?? [];
+                        $label = $config['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
+                    @endphp
+                    <button
+                        x-on:click="scrollTo('block-{{ $blockKey }}')"
+                        :class="activeBlock === 'block-{{ $blockKey }}' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]'"
+                        class="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap"
+                    >
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
 
-            @if($hasAreas)
-                {{-- Complex grid with named areas (BMC, Lean Canvas) --}}
-                @php
-                    $areasRows = array_map('trim', explode('/', $layout['areas']));
-                    $cssAreas = collect($areasRows)->map(fn($row) => "'" . $row . "'")->implode(' ');
-                    $areaMap = $layout['area_map'];
-                @endphp
-                {{-- Desktop: area-based grid, Mobile/Tablet: simple flow --}}
-                <div class="hidden lg:grid gap-3" style="grid-template-columns: repeat({{ $columns }}, 1fr); grid-template-rows: {{ str_repeat('auto ', $rows) }}; grid-template-areas: {{ $cssAreas }};">
-                    @foreach($blockDefs as $def)
-                        @php
-                            $blockKey = $def['key'];
-                            $areaName = $areaMap[$blockKey] ?? null;
-                        @endphp
-                        @if($areaName)
-                        <div style="grid-area: {{ $areaName }};">
-                            @include('canvas::livewire.canvas._block', ['blockKey' => $blockKey, 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                        </div>
-                        @endif
-                    @endforeach
+    {{-- Main Content: Blocks full-width stacked --}}
+    <x-ui-page-container>
+        <div class="max-w-5xl mx-auto space-y-6 py-6">
+            @foreach($blockDefs as $def)
+                <div id="block-{{ $def['key'] }}" class="scroll-mt-24" data-block>
+                    @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
                 </div>
-                {{-- Mobile/Tablet fallback: masonry --}}
-                <div class="columns-1 md:columns-2 gap-3 space-y-3 lg:hidden">
-                    @foreach($blockDefs as $def)
-                        @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                    @endforeach
-                </div>
-            @else
-                {{-- Simple layout: masonry with responsive columns --}}
-                <div class="columns-1 md:columns-2 lg:columns-{{ $columns }} gap-3 space-y-3">
-                    @foreach($blockDefs as $def)
-                        @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                    @endforeach
-                </div>
-            @endif
+            @endforeach
         </div>
     </x-ui-page-container>
+
+    <script>
+    function blockNav() {
+        return {
+            activeBlock: '',
+            observer: null,
+            init() {
+                this.$nextTick(() => {
+                    const blocks = document.querySelectorAll('[data-block]');
+                    if (!blocks.length) return;
+                    this.activeBlock = blocks[0]?.id || '';
+                    this.observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                this.activeBlock = entry.target.id;
+                            }
+                        });
+                    }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+                    blocks.forEach(block => this.observer.observe(block));
+                });
+            },
+            scrollTo(id) {
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+    </script>
 
     {{-- Left Sidebar --}}
     <x-slot name="sidebar">
