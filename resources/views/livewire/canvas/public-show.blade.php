@@ -1,6 +1,6 @@
-<div class="min-h-screen bg-[var(--ui-bg)]" x-data="{ commentsOpen: true }">
-    {{-- Sticky Header --}}
-    <div class="sticky top-0 z-30 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
+<div class="h-screen overflow-hidden bg-[var(--ui-bg)] d-flex flex-col" x-data="{ commentsOpen: true }">
+    {{-- Fixed Header --}}
+    <div class="flex-shrink-0 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm z-30">
         <div class="px-4 sm:px-6 lg:px-8 py-3 d-flex items-center justify-between">
             <div class="min-w-0 flex-grow-1">
                 <h1 class="text-lg font-bold text-[var(--ui-secondary)] truncate">{{ $canvas->name }}</h1>
@@ -27,9 +27,9 @@
     </div>
 
     {{-- Main Layout: Canvas + Sidebar --}}
-    <div class="d-flex h-[calc(100vh-60px)]">
+    <div class="flex-grow-1 d-flex min-h-0">
         {{-- Canvas Area --}}
-        <div class="flex-grow-1 overflow-y-auto p-4 sm:p-6 lg:p-8" :class="commentsOpen ? '' : ''">
+        <div class="flex-grow-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
             @php
                 $hasAreas = !empty($layout['areas'] ?? null) && !empty($layout['area_map'] ?? null);
                 $columns = $layout['columns'] ?? 3;
@@ -146,10 +146,8 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="translate-x-0 opacity-100"
             x-transition:leave-end="translate-x-full opacity-0"
-            class="w-full lg:w-[400px] flex-shrink-0 border-l border-[var(--ui-border)]/60 bg-[var(--ui-surface)] d-flex flex-col
-                   fixed lg:relative inset-y-0 right-0 z-40 lg:z-auto
-                   max-w-full lg:max-w-[400px]"
-            style="top: 60px;"
+            class="w-[85vw] sm:w-[400px] lg:w-[400px] flex-shrink-0 border-l border-[var(--ui-border)]/60 bg-[var(--ui-surface)] d-flex flex-col
+                   fixed lg:relative inset-y-0 right-0 z-40 lg:z-auto"
             x-cloak
         >
             {{-- Sidebar Header --}}
@@ -320,7 +318,6 @@
             x-show="commentsOpen"
             x-on:click="commentsOpen = false"
             class="fixed inset-0 bg-black/20 z-30 lg:hidden"
-            style="top: 60px;"
             x-cloak
         ></div>
     </div>
