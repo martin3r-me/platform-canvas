@@ -53,67 +53,71 @@
         </x-ui-page-actionbar>
     </x-slot>
 
-    {{-- Block Navigation --}}
-    <div x-data="blockNav()" x-init="init()" class="sticky top-0 z-20 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 overflow-x-auto">
-            <div class="flex items-center gap-1 py-2">
+    {{-- Main Content --}}
+    <x-ui-page-container padding="p-0" spacing="" background="">
+        <div x-data="blockNav()" x-init="init()">
+            {{-- Block Navigation --}}
+            <div class="sticky top-0 z-20 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
+                <div class="px-4 sm:px-6 overflow-x-auto">
+                    <div class="flex items-center gap-1 py-2">
+                        @foreach($blockDefs as $def)
+                            @php
+                                $blockKey = $def['key'];
+                                $config = collect($blockDefs)->firstWhere('key', $blockKey) ?? [];
+                                $label = $config['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
+                            @endphp
+                            <button
+                                x-on:click="scrollTo('block-{{ $blockKey }}')"
+                                :class="activeBlock === 'block-{{ $blockKey }}' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]'"
+                                class="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap"
+                            >
+                                {{ $label }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Blocks --}}
+            <div class="p-4 sm:p-6 space-y-6">
                 @foreach($blockDefs as $def)
-                    @php
-                        $blockKey = $def['key'];
-                        $config = collect($blockDefs)->firstWhere('key', $blockKey) ?? [];
-                        $label = $config['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
-                    @endphp
-                    <button
-                        x-on:click="scrollTo('block-{{ $blockKey }}')"
-                        :class="activeBlock === 'block-{{ $blockKey }}' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]'"
-                        class="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap"
-                    >
-                        {{ $label }}
-                    </button>
+                    <div id="block-{{ $def['key'] }}" class="scroll-mt-14" data-block>
+                        @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
+                    </div>
                 @endforeach
+                <div class="h-[60vh]"></div>
             </div>
         </div>
-    </div>
 
-    {{-- Main Content: Blocks full-width stacked --}}
-    <x-ui-page-container>
-        <div class="space-y-6 py-6">
-            @foreach($blockDefs as $def)
-                <div id="block-{{ $def['key'] }}" class="scroll-mt-24" data-block>
-                    @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
-                </div>
-            @endforeach
-            {{-- Spacer so the last block can scroll to top and get highlighted --}}
-            <div class="h-[60vh]"></div>
-        </div>
-    </x-ui-page-container>
-
-    <script>
-    function blockNav() {
-        return {
-            activeBlock: '',
-            observer: null,
-            init() {
-                this.$nextTick(() => {
-                    const blocks = document.querySelectorAll('[data-block]');
-                    if (!blocks.length) return;
-                    this.activeBlock = blocks[0]?.id || '';
-                    this.observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                this.activeBlock = entry.target.id;
-                            }
-                        });
-                    }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
-                    blocks.forEach(block => this.observer.observe(block));
-                });
-            },
-            scrollTo(id) {
-                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        <script>
+        function blockNav() {
+            return {
+                activeBlock: '',
+                observer: null,
+                init() {
+                    this.$nextTick(() => {
+                        const scrollArea = this.$el.closest('.overflow-y-auto');
+                        const blocks = this.$el.querySelectorAll('[data-block]');
+                        if (!blocks.length) return;
+                        this.activeBlock = blocks[0]?.id || '';
+                        this.observer = new IntersectionObserver((entries) => {
+                            entries.forEach(entry => {
+                                if (entry.isIntersecting) {
+                                    this.activeBlock = entry.target.id;
+                                }
+                            });
+                        }, { root: scrollArea, rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+                        blocks.forEach(block => this.observer.observe(block));
+                    });
+                },
+                scrollTo(id) {
+                    const el = document.getElementById(id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         }
-    }
-    </script>
+        </script>
+    </x-ui-page-container>
 
     {{-- Left Sidebar --}}
     <x-slot name="sidebar">
