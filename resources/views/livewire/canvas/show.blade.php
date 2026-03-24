@@ -83,15 +83,15 @@
                         @endif
                     @endforeach
                 </div>
-                {{-- Mobile/Tablet fallback --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                {{-- Mobile/Tablet fallback: masonry --}}
+                <div class="columns-1 md:columns-2 gap-3 space-y-3 lg:hidden">
                     @foreach($blockDefs as $def)
                         @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
                     @endforeach
                 </div>
             @else
-                {{-- Simple grid with responsive breakpoints --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ $columns }} gap-3">
+                {{-- Simple layout: masonry with responsive columns --}}
+                <div class="columns-1 md:columns-2 lg:columns-{{ $columns }} gap-3 space-y-3">
                     @foreach($blockDefs as $def)
                         @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
                     @endforeach

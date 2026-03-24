@@ -78,8 +78,8 @@
                         @endif
                     @endforeach
                 </div>
-                {{-- Mobile/Tablet fallback --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                {{-- Mobile/Tablet fallback: masonry --}}
+                <div class="columns-1 md:columns-2 gap-3 space-y-3 lg:hidden">
                     @foreach($blockDefs as $def)
                         @php
                             $blockKey = $def['key'];
@@ -102,7 +102,8 @@
                     @endforeach
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ $columns }} gap-3">
+                {{-- Simple layout: masonry --}}
+                <div class="columns-1 md:columns-2 lg:columns-{{ $columns }} gap-3 space-y-3">
                     @foreach($blockDefs as $def)
                         @php
                             $blockKey = $def['key'];
