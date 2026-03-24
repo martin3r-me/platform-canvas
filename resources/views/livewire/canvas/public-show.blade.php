@@ -1,10 +1,10 @@
-<div class="h-screen overflow-hidden bg-[var(--ui-bg)] d-flex flex-col" x-data="{ commentsOpen: true }">
-    {{-- Fixed Header --}}
-    <div class="flex-shrink-0 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm z-30">
-        <div class="px-4 sm:px-6 lg:px-8 py-3 d-flex items-center justify-between">
-            <div class="min-w-0 flex-grow-1">
+<div class="h-screen flex flex-col bg-[var(--ui-bg)]" x-data="{ commentsOpen: true }">
+    {{-- Header --}}
+    <div class="shrink-0 border-b border-[var(--ui-border)]/60 bg-[var(--ui-surface)]/95 backdrop-blur-sm z-30">
+        <div class="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="min-w-0 grow">
                 <h1 class="text-lg font-bold text-[var(--ui-secondary)] truncate">{{ $canvas->name }}</h1>
-                <div class="d-flex items-center gap-2 mt-0.5 text-xs text-[var(--ui-muted)]">
+                <div class="flex items-center gap-2 mt-0.5 text-xs text-[var(--ui-muted)]">
                     <span>{{ $canvas->canvasType?->name ?? 'Canvas' }}</span>
                     <span class="opacity-40">&middot;</span>
                     <span>{{ $canvas->updated_at?->format('d.m.Y H:i') }}</span>
@@ -16,7 +16,7 @@
             </div>
             <button
                 x-on:click="commentsOpen = !commentsOpen"
-                class="flex-shrink-0 ml-4 d-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                class="shrink-0 ml-4 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                 :class="commentsOpen ? 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]'"
             >
                 @svg('heroicon-o-chat-bubble-left-right', 'w-4 h-4')
@@ -26,10 +26,10 @@
         </div>
     </div>
 
-    {{-- Main Layout: Canvas + Sidebar --}}
-    <div class="flex-grow-1 d-flex min-h-0">
+    {{-- Body: Canvas + Sidebar --}}
+    <div class="grow flex min-h-0">
         {{-- Canvas Area --}}
-        <div class="flex-grow-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div class="grow min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
             @php
                 $hasAreas = !empty($layout['areas'] ?? null) && !empty($layout['area_map'] ?? null);
                 $columns = $layout['columns'] ?? 3;
@@ -58,7 +58,7 @@
                                 <button
                                     wire:click="filterByBlock({{ $blockData['id'] }})"
                                     x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 d-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
+                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
                                 >
                                     @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
                                     {{ $blockCommentCount }}
@@ -92,7 +92,7 @@
                                 <button
                                     wire:click="filterByBlock({{ $blockData['id'] }})"
                                     x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 d-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
+                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
                                 >
                                     @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
                                     {{ $blockCommentCount }}
@@ -115,7 +115,7 @@
                                 <button
                                     wire:click="filterByBlock({{ $blockData['id'] }})"
                                     x-on:click="commentsOpen = true"
-                                    class="absolute top-2 right-2 d-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
+                                    class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm"
                                 >
                                     @svg('heroicon-s-chat-bubble-left', 'w-3 h-3')
                                     {{ $blockCommentCount }}
@@ -137,48 +137,49 @@
             @endif
         </div>
 
-        {{-- Comment Sidebar (Desktop: right panel, Mobile: overlay) --}}
+        {{-- Comment Sidebar --}}
         <div
             x-show="commentsOpen"
             x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="translate-x-full opacity-0"
-            x-transition:enter-end="translate-x-0 opacity-100"
+            x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0"
             x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="translate-x-0 opacity-100"
-            x-transition:leave-end="translate-x-full opacity-0"
-            class="w-[85vw] sm:w-[400px] lg:w-[400px] flex-shrink-0 border-l border-[var(--ui-border)]/60 bg-[var(--ui-surface)] d-flex flex-col
-                   fixed lg:relative inset-y-0 right-0 z-40 lg:z-auto"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="translate-x-full"
+            class="shrink-0 w-[85vw] sm:w-[400px] border-l border-[var(--ui-border)]/60 bg-[var(--ui-surface)] flex flex-col
+                   fixed inset-y-0 right-0 z-40
+                   lg:relative lg:inset-auto lg:z-auto"
             x-cloak
         >
             {{-- Sidebar Header --}}
-            <div class="d-flex items-center justify-between px-4 py-3 border-b border-[var(--ui-border)]/40 flex-shrink-0">
-                <div class="d-flex items-center gap-2">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--ui-border)]/40 shrink-0">
+                <div class="flex items-center gap-2">
                     <h2 class="text-sm font-bold text-[var(--ui-secondary)]">Kommentare</h2>
                     <span class="text-[10px] font-semibold text-[var(--ui-muted)] bg-[var(--ui-muted-5)] rounded-full px-2 py-0.5">{{ $allComments->count() }}</span>
                 </div>
-                <div class="d-flex items-center gap-1">
+                <div class="flex items-center gap-1">
                     @if($filterBlockId)
                         <button
                             wire:click="filterByBlock(null)"
-                            class="d-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
+                            class="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
                         >
                             @svg('heroicon-o-funnel', 'w-3 h-3')
                             Filter aktiv
                             @svg('heroicon-o-x-mark', 'w-3 h-3')
                         </button>
                     @endif
-                    <button x-on:click="commentsOpen = false" class="lg:hidden p-1 rounded text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
-                        @svg('heroicon-o-x-mark', 'w-5 h-5')
+                    <button x-on:click="commentsOpen = false" class="p-1.5 rounded-lg text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-colors">
+                        @svg('heroicon-o-x-mark', 'w-4 h-4')
                     </button>
                 </div>
             </div>
 
             {{-- Block Filter Chips --}}
-            <div class="px-4 py-2 border-b border-[var(--ui-border)]/20 flex-shrink-0 overflow-x-auto">
-                <div class="d-flex items-center gap-1.5 flex-nowrap">
+            <div class="px-4 py-2 border-b border-[var(--ui-border)]/20 shrink-0 overflow-x-auto">
+                <div class="flex items-center gap-1.5 flex-nowrap">
                     <button
                         wire:click="filterByBlock(null)"
-                        class="flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ !$filterBlockId ? 'bg-blue-500 text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                        class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ !$filterBlockId ? 'bg-blue-500 text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
                     >
                         Alle
                     </button>
@@ -187,7 +188,7 @@
                         @if($blockCount > 0)
                         <button
                             wire:click="filterByBlock({{ $block->id }})"
-                            class="flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ $filterBlockId === $block->id ? 'bg-blue-500 text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                            class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors whitespace-nowrap {{ $filterBlockId === $block->id ? 'bg-blue-500 text-white' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
                         >
                             {{ $block->label }} ({{ $blockCount }})
                         </button>
@@ -197,25 +198,25 @@
             </div>
 
             {{-- Comment Form --}}
-            <div class="px-4 py-3 border-b border-[var(--ui-border)]/30 flex-shrink-0">
+            <div class="px-4 py-3 border-b border-[var(--ui-border)]/30 shrink-0">
                 <form wire:submit="addComment">
                     @if($replyToId)
                         @php $replyTarget = $comments->firstWhere('id', $replyToId); @endphp
-                        <div class="d-flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                            @svg('heroicon-o-arrow-uturn-left', 'w-3 h-3 text-blue-500 flex-shrink-0')
-                            <span class="text-[10px] text-blue-600 truncate flex-grow-1">
+                        <div class="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                            @svg('heroicon-o-arrow-uturn-left', 'w-3 h-3 text-blue-500 shrink-0')
+                            <span class="text-[10px] text-blue-600 truncate grow">
                                 Antwort auf: {{ Str::limit($replyTarget?->content ?? '', 50) }}
                             </span>
-                            <button type="button" wire:click="cancelReply" class="flex-shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
+                            <button type="button" wire:click="cancelReply" class="shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
                                 @svg('heroicon-o-x-mark', 'w-3 h-3')
                             </button>
                         </div>
                     @elseif($commentBlockId)
                         @php $selectedBlock = $canvas->buildingBlocks->firstWhere('id', $commentBlockId); @endphp
-                        <div class="d-flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/30">
-                            @svg('heroicon-o-cube', 'w-3 h-3 text-[var(--ui-muted)] flex-shrink-0')
-                            <span class="text-[10px] text-[var(--ui-secondary)] flex-grow-1">{{ $selectedBlock?->label ?? 'Block' }}</span>
-                            <button type="button" wire:click="$set('commentBlockId', null)" class="flex-shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
+                        <div class="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/30">
+                            @svg('heroicon-o-cube', 'w-3 h-3 text-[var(--ui-muted)] shrink-0')
+                            <span class="text-[10px] text-[var(--ui-secondary)] grow">{{ $selectedBlock?->label ?? 'Block' }}</span>
+                            <button type="button" wire:click="$set('commentBlockId', null)" class="shrink-0 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]">
                                 @svg('heroicon-o-x-mark', 'w-3 h-3')
                             </button>
                         </div>
@@ -228,16 +229,16 @@
                         </select>
                     @endif
 
-                    <div class="d-flex gap-2">
+                    <div class="flex gap-2">
                         <textarea
                             wire:model="commentContent"
                             rows="2"
                             placeholder="{{ $replyToId ? 'Antwort schreiben...' : 'Kommentar schreiben...' }}"
-                            class="flex-grow-1 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-xs text-[var(--ui-secondary)] p-2.5 resize-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            class="grow rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-xs text-[var(--ui-secondary)] p-2.5 resize-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         ></textarea>
                         <button
                             type="submit"
-                            class="flex-shrink-0 self-end px-3 py-2 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                            class="shrink-0 self-end px-3 py-2 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
                             wire:loading.attr="disabled"
                         >
                             @svg('heroicon-o-paper-airplane', 'w-4 h-4')
@@ -250,14 +251,14 @@
             </div>
 
             {{-- Comments List --}}
-            <div class="flex-grow-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div class="grow overflow-y-auto px-4 py-3 space-y-3">
                 @forelse($comments as $comment)
-                    {{-- Root Comment --}}
                     <div class="space-y-2">
+                        {{-- Root Comment --}}
                         <div class="rounded-lg border border-[var(--ui-border)]/30 bg-[var(--ui-bg)] p-3 hover:border-[var(--ui-border)]/50 transition-colors">
-                            <div class="d-flex items-center gap-2 mb-1.5">
+                            <div class="flex items-center gap-2 mb-1.5">
                                 @if($comment->building_block_id)
-                                    <span class="d-flex items-center gap-1 text-[9px] font-medium text-blue-600 bg-blue-500/10 rounded px-1.5 py-0.5">
+                                    <span class="flex items-center gap-1 text-[9px] font-medium text-blue-600 bg-blue-500/10 rounded px-1.5 py-0.5">
                                         @svg('heroicon-o-cube', 'w-2.5 h-2.5')
                                         {{ $comment->buildingBlock?->label ?? 'Block' }}
                                     </span>
@@ -267,10 +268,10 @@
                                 <span class="text-[10px] text-[var(--ui-muted)]/60 ml-auto">{{ $comment->created_at->format('d.m. H:i') }}</span>
                             </div>
                             <p class="text-xs text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $comment->content }}</p>
-                            <div class="mt-2 d-flex items-center gap-2">
+                            <div class="mt-2 flex items-center gap-2">
                                 <button
                                     wire:click="setReplyTo({{ $comment->id }})"
-                                    class="d-flex items-center gap-1 text-[10px] text-[var(--ui-muted)] hover:text-blue-500 transition-colors"
+                                    class="flex items-center gap-1 text-[10px] text-[var(--ui-muted)] hover:text-blue-500 transition-colors"
                                 >
                                     @svg('heroicon-o-arrow-uturn-left', 'w-3 h-3')
                                     Antworten
@@ -288,7 +289,7 @@
                             <div class="ml-4 space-y-2 border-l-2 border-[var(--ui-border)]/20 pl-3">
                                 @foreach($comment->replies as $reply)
                                     <div class="rounded-lg border border-[var(--ui-border)]/20 bg-[var(--ui-muted-5)]/30 p-2.5">
-                                        <div class="d-flex items-center gap-2 mb-1">
+                                        <div class="flex items-center gap-2 mb-1">
                                             <span class="text-[10px] text-[var(--ui-muted)]/60">{{ $reply->created_at->format('d.m. H:i') }}</span>
                                         </div>
                                         <p class="text-[11px] text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $reply->content }}</p>
