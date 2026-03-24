@@ -2,8 +2,10 @@
 
 namespace Platform\Canvas\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Symfony\Component\Uid\UuidV7;
 
 class CanvasComment extends Model
@@ -14,6 +16,7 @@ class CanvasComment extends Model
         'uuid',
         'canvas_id',
         'building_block_id',
+        'parent_id',
         'content',
     ];
 
@@ -34,5 +37,20 @@ class CanvasComment extends Model
     public function buildingBlock(): BelongsTo
     {
         return $this->belongsTo(BuildingBlock::class, 'building_block_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('created_at');
+    }
+
+    public function scopeRootComments(Builder $query): Builder
+    {
+        return $query->whereNull('parent_id');
     }
 }

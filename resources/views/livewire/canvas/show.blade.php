@@ -65,12 +65,12 @@
             @if($hasAreas)
                 {{-- Complex grid with named areas (BMC, Lean Canvas) --}}
                 @php
-                    // Convert "kp ka vp cr cs / kp kr vp ch cs / cost cost cost rev rev" to CSS grid-template-areas
                     $areasRows = array_map('trim', explode('/', $layout['areas']));
                     $cssAreas = collect($areasRows)->map(fn($row) => "'" . $row . "'")->implode(' ');
                     $areaMap = $layout['area_map'];
                 @endphp
-                <div class="grid gap-3" style="grid-template-columns: repeat({{ $columns }}, 1fr); grid-template-rows: {{ str_repeat('auto ', $rows) }}; grid-template-areas: {{ $cssAreas }};">
+                {{-- Desktop: area-based grid, Mobile/Tablet: simple flow --}}
+                <div class="hidden lg:grid gap-3" style="grid-template-columns: repeat({{ $columns }}, 1fr); grid-template-rows: {{ str_repeat('auto ', $rows) }}; grid-template-areas: {{ $cssAreas }};">
                     @foreach($blockDefs as $def)
                         @php
                             $blockKey = $def['key'];
@@ -83,9 +83,15 @@
                         @endif
                     @endforeach
                 </div>
+                {{-- Mobile/Tablet fallback --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                    @foreach($blockDefs as $def)
+                        @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
+                    @endforeach
+                </div>
             @else
-                {{-- Simple grid (SWOT 2x2, Project Canvas 3x3) --}}
-                <div class="grid grid-cols-{{ $columns }} gap-3">
+                {{-- Simple grid with responsive breakpoints --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ $columns }} gap-3">
                     @foreach($blockDefs as $def)
                         @include('canvas::livewire.canvas._block', ['blockKey' => $def['key'], 'blocks' => $canvasData['blocks'], 'blockDefs' => $blockDefs])
                     @endforeach
