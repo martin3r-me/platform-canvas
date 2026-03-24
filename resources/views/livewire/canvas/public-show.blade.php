@@ -281,6 +281,13 @@
                                         {{ $comment->replies->count() }} {{ $comment->replies->count() === 1 ? 'Antwort' : 'Antworten' }}
                                     </span>
                                 @endif
+                                <button
+                                    wire:click="deleteComment({{ $comment->id }})"
+                                    wire:confirm="Kommentar und alle Antworten l&ouml;schen?"
+                                    class="flex items-center gap-1 text-[10px] text-[var(--ui-muted)] hover:text-red-500 transition-colors ml-auto"
+                                >
+                                    @svg('heroicon-o-trash', 'w-3 h-3')
+                                </button>
                             </div>
                         </div>
 
@@ -288,9 +295,16 @@
                         @if($comment->replies->count() > 0)
                             <div class="ml-4 space-y-2 border-l-2 border-[var(--ui-border)]/20 pl-3">
                                 @foreach($comment->replies as $reply)
-                                    <div class="rounded-lg border border-[var(--ui-border)]/20 bg-[var(--ui-muted-5)]/30 p-2.5">
+                                    <div class="rounded-lg border border-[var(--ui-border)]/20 bg-[var(--ui-muted-5)]/30 p-2.5 group/reply">
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="text-[10px] text-[var(--ui-muted)]/60">{{ $reply->created_at->format('d.m. H:i') }}</span>
+                                            <button
+                                                wire:click="deleteComment({{ $reply->id }})"
+                                                wire:confirm="Antwort l&ouml;schen?"
+                                                class="ml-auto opacity-0 group-hover/reply:opacity-100 text-[var(--ui-muted)] hover:text-red-500 transition-all"
+                                            >
+                                                @svg('heroicon-o-trash', 'w-3 h-3')
+                                            </button>
                                         </div>
                                         <p class="text-[11px] text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $reply->content }}</p>
                                     </div>

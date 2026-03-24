@@ -75,6 +75,19 @@ class PublicShow extends Component
         $this->replyToId = null;
     }
 
+    public function deleteComment(int $commentId): void
+    {
+        $comment = $this->canvas->comments()->where('id', $commentId)->first();
+
+        if (! $comment) {
+            return;
+        }
+
+        // Delete replies first, then the comment itself
+        $comment->replies()->delete();
+        $comment->delete();
+    }
+
     public function filterByBlock(?int $blockId): void
     {
         $this->filterBlockId = $blockId;
