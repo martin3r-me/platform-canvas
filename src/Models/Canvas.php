@@ -14,6 +14,45 @@ class Canvas extends Model
 {
     use LogsActivity, SoftDeletes;
 
+    // Status-Konstanten (Funnel-Reihenfolge)
+    public const STATUS_BACKLOG = 'backlog';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_REVIEW = 'review';
+    public const STATUS_VALIDATED = 'validated';
+    public const STATUS_ARCHIVED = 'archived';
+
+    public const STATUSES = [
+        self::STATUS_BACKLOG,
+        self::STATUS_IN_PROGRESS,
+        self::STATUS_REVIEW,
+        self::STATUS_VALIDATED,
+        self::STATUS_ARCHIVED,
+    ];
+
+    public const STATUS_LABELS = [
+        self::STATUS_BACKLOG => 'Backlog',
+        self::STATUS_IN_PROGRESS => 'In Arbeit',
+        self::STATUS_REVIEW => 'Review',
+        self::STATUS_VALIDATED => 'Validiert',
+        self::STATUS_ARCHIVED => 'Archiviert',
+    ];
+
+    public const STATUS_ICONS = [
+        self::STATUS_BACKLOG => 'heroicon-o-inbox-stack',
+        self::STATUS_IN_PROGRESS => 'heroicon-o-pencil-square',
+        self::STATUS_REVIEW => 'heroicon-o-eye',
+        self::STATUS_VALIDATED => 'heroicon-o-check-badge',
+        self::STATUS_ARCHIVED => 'heroicon-o-archive-box',
+    ];
+
+    public const STATUS_VARIANTS = [
+        self::STATUS_BACKLOG => 'secondary',
+        self::STATUS_IN_PROGRESS => 'warning',
+        self::STATUS_REVIEW => 'info',
+        self::STATUS_VALIDATED => 'success',
+        self::STATUS_ARCHIVED => 'secondary',
+    ];
+
     protected $table = 'canvases';
 
     protected $fillable = [

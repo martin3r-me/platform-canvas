@@ -47,8 +47,8 @@ class UpdateCanvasTool implements ToolContract, ToolMetadataContract
                 ],
                 'status' => [
                     'type' => 'string',
-                    'enum' => ['draft', 'active', 'archived'],
-                    'description' => 'Optional: Neuer Status (draft, active, archived).',
+                    'enum' => Canvas::STATUSES,
+                    'description' => 'Optional: Neuer Status (' . implode(', ', Canvas::STATUSES) . ').',
                 ],
             ],
             'required' => ['canvas_id'],
@@ -90,8 +90,8 @@ class UpdateCanvasTool implements ToolContract, ToolMetadataContract
 
             if (array_key_exists('status', $arguments)) {
                 $newStatus = $arguments['status'];
-                if (!in_array($newStatus, ['draft', 'active', 'archived'])) {
-                    return ToolResult::error('VALIDATION_ERROR', 'Ungültiger Status. Erlaubt: draft, active, archived.');
+                if (!in_array($newStatus, Canvas::STATUSES)) {
+                    return ToolResult::error('VALIDATION_ERROR', 'Ungültiger Status. Erlaubt: ' . implode(', ', Canvas::STATUSES));
                 }
                 $canvas->status = $newStatus;
             }

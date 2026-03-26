@@ -108,6 +108,9 @@ class CanvasServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Canvas\Tools\GetSnapshotTool());
             $registry->register(new \Platform\Canvas\Tools\CompareSnapshotsTool());
 
+            // Comments
+            $registry->register(new \Platform\Canvas\Tools\ListCommentsTool());
+
             // Utilities
             $registry->register(new \Platform\Canvas\Tools\AnalyzeTool());
             $registry->register(new \Platform\Canvas\Tools\ExportCanvasTool());

@@ -132,8 +132,8 @@
                 {{-- Status --}}
                 <div>
                     <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Status</h3>
-                    <x-ui-badge :variant="match($canvas->status) { 'active' => 'success', 'archived' => 'secondary', default => 'warning' }">
-                        {{ ucfirst($canvas->status) }}
+                    <x-ui-badge :variant="\Platform\Canvas\Models\Canvas::STATUS_VARIANTS[$canvas->status] ?? 'secondary'">
+                        {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$canvas->status] ?? $canvas->status }}
                     </x-ui-badge>
                 </div>
 

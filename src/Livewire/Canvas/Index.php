@@ -3,44 +3,31 @@
 namespace Platform\Canvas\Livewire\Canvas;
 
 use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Models\CanvasType;
 
 class Index extends Component
 {
-    use WithPagination;
-
     public string $search = '';
-    public string $statusFilter = '';
     public string $typeFilter = '';
 
-    public function updatingSearch(): void
+    public function updateStatus(int $canvasId, string $status): void
     {
-        $this->resetPage();
-    }
+        if (! in_array($status, Canvas::STATUSES)) {
+            return;
+        }
 
-    public function updatingStatusFilter(): void
-    {
-        $this->resetPage();
-    }
+        $user = Auth::user();
+        $teamId = $user->currentTeam?->id;
 
-    public function updatingTypeFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    public function setStatusFilter(string $status): void
-    {
-        $this->statusFilter = $this->statusFilter === $status ? '' : $status;
-        $this->resetPage();
+        $canvas = Canvas::forTeam($teamId)->findOrFail($canvasId);
+        $canvas->update(['status' => $status]);
     }
 
     public function setTypeFilter(string $typeKey): void
     {
         $this->typeFilter = $this->typeFilter === $typeKey ? '' : $typeKey;
-        $this->resetPage();
     }
 
     public function rendered(): void
@@ -63,38 +50,37 @@ class Index extends Component
         $team = $user->currentTeam;
         $teamId = $team?->id;
 
-        // Available canvas types for filter
         $canvasTypes = CanvasType::availableForTeam($teamId)->get();
 
         $query = Canvas::forTeam($teamId)
-            ->with('canvasType')
-            ->withCount('buildingBlocks')
-            ->with('createdByUser');
+            ->with('canvasType', 'createdByUser')
+            ->withCount('buildingBlocks');
 
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
-        }
-
-        if ($this->statusFilter) {
-            $query->byStatus($this->statusFilter);
         }
 
         if ($this->typeFilter) {
             $query->ofType($this->typeFilter);
         }
 
-        $canvases = $query->orderBy('updated_at', 'desc')->paginate(15);
+        $allCanvases = $query->orderBy('updated_at', 'desc')->get();
 
-        $statsQuery = Canvas::forTeam($teamId);
-        $stats = [
-            'total' => (clone $statsQuery)->count(),
-            'draft' => (clone $statsQuery)->byStatus('draft')->count(),
-            'active' => (clone $statsQuery)->byStatus('active')->count(),
-            'archived' => (clone $statsQuery)->byStatus('archived')->count(),
-        ];
+        // Nach Status gruppieren (Funnel-Reihenfolge)
+        $grouped = collect();
+        foreach (Canvas::STATUSES as $status) {
+            $grouped[$status] = $allCanvases->where('status', $status)->values();
+        }
+
+        // Stats
+        $stats = [];
+        foreach (Canvas::STATUSES as $status) {
+            $stats[$status] = $grouped[$status]->count();
+        }
+        $stats['total'] = $allCanvases->count();
 
         return view('canvas::livewire.canvas.index', [
-            'canvases' => $canvases,
+            'grouped' => $grouped,
             'canvasTypes' => $canvasTypes,
             'stats' => $stats,
         ])->layout('platform::layouts.app');

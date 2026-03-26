@@ -37,8 +37,8 @@ class ListCanvasesTool implements ToolContract, ToolMetadataContract
                     ],
                     'status' => [
                         'type' => 'string',
-                        'enum' => ['draft', 'active', 'archived'],
-                        'description' => 'Optional: Filter nach Status.',
+                        'enum' => Canvas::STATUSES,
+                        'description' => 'Optional: Filter nach Status (' . implode(', ', Canvas::STATUSES) . ').',
                     ],
                     'type_key' => [
                         'type' => 'string',

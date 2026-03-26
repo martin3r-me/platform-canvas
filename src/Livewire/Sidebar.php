@@ -42,7 +42,7 @@ class Sidebar extends Component
         $canvas->name = 'Neues Canvas';
         $canvas->team_id = $teamId;
         $canvas->created_by_user_id = $user->id;
-        $canvas->status = 'draft';
+        $canvas->status = Canvas::STATUS_BACKLOG;
         if ($canvasType) {
             $canvas->canvas_type_id = $canvasType->id;
         }

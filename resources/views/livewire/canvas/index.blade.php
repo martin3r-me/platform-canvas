@@ -16,7 +16,7 @@
         <div class="space-y-6">
 
             {{-- Stats --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <x-ui-dashboard-tile
                     title="Gesamt"
                     :count="$stats['total']"
@@ -25,81 +25,82 @@
                     variant="secondary"
                     size="lg"
                 />
+                @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $status)
                 <x-ui-dashboard-tile
-                    title="Entwurf"
-                    :count="$stats['draft']"
-                    subtitle="Draft"
-                    icon="pencil-square"
-                    variant="secondary"
+                    :title="\Platform\Canvas\Models\Canvas::STATUS_LABELS[$status]"
+                    :count="$stats[$status]"
+                    :icon="str_replace('heroicon-o-', '', \Platform\Canvas\Models\Canvas::STATUS_ICONS[$status])"
+                    :variant="\Platform\Canvas\Models\Canvas::STATUS_VARIANTS[$status]"
                     size="lg"
                 />
-                <x-ui-dashboard-tile
-                    title="Aktiv"
-                    :count="$stats['active']"
-                    subtitle="In Bearbeitung"
-                    icon="check-circle"
-                    variant="secondary"
-                    size="lg"
-                />
-                <x-ui-dashboard-tile
-                    title="Archiviert"
-                    :count="$stats['archived']"
-                    subtitle="Abgeschlossen"
-                    icon="archive-box"
-                    variant="secondary"
-                    size="lg"
-                />
+                @endforeach
             </div>
 
-            {{-- Canvas Table --}}
-            @if($canvases->isNotEmpty())
-            <x-ui-panel title="Canvases" subtitle="{{ $stats['total'] }} Canvas(es) in diesem Team">
-                <x-ui-table compact="true">
-                    <x-ui-table-header>
-                        <x-ui-table-header-cell compact="true">Name</x-ui-table-header-cell>
-                        <x-ui-table-header-cell compact="true">Typ</x-ui-table-header-cell>
-                        <x-ui-table-header-cell compact="true">Status</x-ui-table-header-cell>
-                        <x-ui-table-header-cell compact="true">Bloecke</x-ui-table-header-cell>
-                        <x-ui-table-header-cell compact="true">Erstellt von</x-ui-table-header-cell>
-                        <x-ui-table-header-cell compact="true">Aktualisiert</x-ui-table-header-cell>
-                    </x-ui-table-header>
-                    <x-ui-table-body>
-                        @foreach($canvases as $canvas)
-                        <x-ui-table-row compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
-                            <x-ui-table-cell compact="true">
-                                <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
-                                @if($canvas->description)
-                                <div class="text-xs text-[var(--ui-muted)] truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
-                                @endif
-                            </x-ui-table-cell>
-                            <x-ui-table-cell compact="true">
-                                <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
-                            </x-ui-table-cell>
-                            <x-ui-table-cell compact="true">
-                                <x-ui-badge :variant="match($canvas->status) { 'active' => 'success', 'archived' => 'secondary', default => 'warning' }">
-                                    {{ ucfirst($canvas->status) }}
-                                </x-ui-badge>
-                            </x-ui-table-cell>
-                            <x-ui-table-cell compact="true">
-                                <span class="text-sm">{{ $canvas->building_blocks_count }}</span>
-                            </x-ui-table-cell>
-                            <x-ui-table-cell compact="true">
-                                <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->createdByUser?->name ?? '-' }}</span>
-                            </x-ui-table-cell>
-                            <x-ui-table-cell compact="true">
-                                <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->updated_at?->diffForHumans() }}</span>
-                            </x-ui-table-cell>
-                        </x-ui-table-row>
-                        @endforeach
-                    </x-ui-table-body>
-                </x-ui-table>
+            {{-- Status Sections --}}
+            @php $hasAnyCanvas = false; @endphp
+            @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $status)
+                @if($grouped[$status]->isNotEmpty())
+                    @php $hasAnyCanvas = true; @endphp
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            @svg(\Platform\Canvas\Models\Canvas::STATUS_ICONS[$status], 'w-5 h-5 text-[var(--ui-muted)]')
+                            <h2 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider">
+                                {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$status] }}
+                            </h2>
+                            <span class="text-xs text-[var(--ui-muted)]">({{ $grouped[$status]->count() }})</span>
+                        </div>
 
-                <div class="p-4">
-                    {{ $canvases->links() }}
-                </div>
-            </x-ui-panel>
-            @else
+                        <x-ui-panel>
+                            <x-ui-table compact="true">
+                                <x-ui-table-header>
+                                    <x-ui-table-header-cell compact="true">Name</x-ui-table-header-cell>
+                                    <x-ui-table-header-cell compact="true">Typ</x-ui-table-header-cell>
+                                    <x-ui-table-header-cell compact="true">Status</x-ui-table-header-cell>
+                                    <x-ui-table-header-cell compact="true">Erstellt von</x-ui-table-header-cell>
+                                    <x-ui-table-header-cell compact="true">Aktualisiert</x-ui-table-header-cell>
+                                </x-ui-table-header>
+                                <x-ui-table-body>
+                                    @foreach($grouped[$status] as $canvas)
+                                    <x-ui-table-row compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
+                                        <x-ui-table-cell compact="true">
+                                            <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
+                                            @if($canvas->description)
+                                            <div class="text-xs text-[var(--ui-muted)] truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
+                                            @endif
+                                        </x-ui-table-cell>
+                                        <x-ui-table-cell compact="true">
+                                            <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
+                                        </x-ui-table-cell>
+                                        <x-ui-table-cell compact="true">
+                                            <select
+                                                wire:change="updateStatus({{ $canvas->id }}, $event.target.value)"
+                                                x-on:click.stop
+                                                class="text-xs rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg)] text-[var(--ui-secondary)] px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--ui-primary)]"
+                                            >
+                                                @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $s)
+                                                <option value="{{ $s }}" @selected($canvas->status === $s)>
+                                                    {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$s] }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </x-ui-table-cell>
+                                        <x-ui-table-cell compact="true">
+                                            <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->createdByUser?->name ?? '-' }}</span>
+                                        </x-ui-table-cell>
+                                        <x-ui-table-cell compact="true">
+                                            <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->updated_at?->diffForHumans() }}</span>
+                                        </x-ui-table-cell>
+                                    </x-ui-table-row>
+                                    @endforeach
+                                </x-ui-table-body>
+                            </x-ui-table>
+                        </x-ui-panel>
+                    </div>
+                @endif
+            @endforeach
+
             {{-- Empty State --}}
+            @if(! $hasAnyCanvas)
             <x-ui-panel>
                 <div class="p-12 text-center">
                     @svg('heroicon-o-squares-2x2', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
@@ -143,45 +144,6 @@
                     </div>
                 </div>
                 @endif
-
-                {{-- Status Filter --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Status</h3>
-                    <div class="space-y-1">
-                        <button wire:click="setStatusFilter('')"
-                            class="d-flex items-center justify-between w-full p-2 rounded-md text-xs transition-colors {{ $statusFilter === '' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium' : 'text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)]' }}">
-                            <span class="d-flex items-center gap-2">
-                                @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
-                                Alle
-                            </span>
-                            <span>{{ $stats['total'] }}</span>
-                        </button>
-                        <button wire:click="setStatusFilter('draft')"
-                            class="d-flex items-center justify-between w-full p-2 rounded-md text-xs transition-colors {{ $statusFilter === 'draft' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium' : 'text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)]' }}">
-                            <span class="d-flex items-center gap-2">
-                                @svg('heroicon-o-pencil-square', 'w-3.5 h-3.5')
-                                Entwurf
-                            </span>
-                            <span>{{ $stats['draft'] }}</span>
-                        </button>
-                        <button wire:click="setStatusFilter('active')"
-                            class="d-flex items-center justify-between w-full p-2 rounded-md text-xs transition-colors {{ $statusFilter === 'active' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium' : 'text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)]' }}">
-                            <span class="d-flex items-center gap-2">
-                                @svg('heroicon-o-check-circle', 'w-3.5 h-3.5')
-                                Aktiv
-                            </span>
-                            <span>{{ $stats['active'] }}</span>
-                        </button>
-                        <button wire:click="setStatusFilter('archived')"
-                            class="d-flex items-center justify-between w-full p-2 rounded-md text-xs transition-colors {{ $statusFilter === 'archived' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium' : 'text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)]' }}">
-                            <span class="d-flex items-center gap-2">
-                                @svg('heroicon-o-archive-box', 'w-3.5 h-3.5')
-                                Archiviert
-                            </span>
-                            <span>{{ $stats['archived'] }}</span>
-                        </button>
-                    </div>
-                </div>
             </div>
         </x-ui-page-sidebar>
     </x-slot>

@@ -44,8 +44,8 @@ class CreateCanvasTool implements ToolContract, ToolMetadataContract
                 ],
                 'status' => [
                     'type' => 'string',
-                    'enum' => ['draft', 'active', 'archived'],
-                    'description' => 'Optional: Status (draft, active, archived). Default: draft.',
+                    'enum' => Canvas::STATUSES,
+                    'description' => 'Optional: Status (' . implode(', ', Canvas::STATUSES) . '). Default: backlog.',
                 ],
                 'type_key' => [
                     'type' => 'string',
@@ -107,7 +107,7 @@ class CreateCanvasTool implements ToolContract, ToolMetadataContract
             $canvas = $canvasService->createCanvas([
                 'name' => $name,
                 'description' => $arguments['description'] ?? null,
-                'status' => $arguments['status'] ?? 'draft',
+                'status' => $arguments['status'] ?? Canvas::STATUS_BACKLOG,
                 'canvas_type_id' => $canvasTypeId,
                 'contextable_type' => $arguments['contextable_type'] ?? null,
                 'contextable_id' => $arguments['contextable_id'] ?? null,
