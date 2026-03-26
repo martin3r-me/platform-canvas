@@ -72,14 +72,18 @@
                                             <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
                                         </x-ui-table-cell>
                                         <x-ui-table-cell compact="true">
-                                            <div x-on:click.stop x-on:mousedown.stop>
-                                                <x-ui-input-select
-                                                    name="status_{{ $canvas->id }}"
-                                                    :options="\Platform\Canvas\Models\Canvas::STATUS_LABELS"
-                                                    :value="$canvas->status"
-                                                    size="xs"
-                                                    wire:change="updateStatus({{ $canvas->id }}, $event.target.value)"
-                                                />
+                                            <div x-on:click.stop x-on:mousedown.stop wire:ignore>
+                                                <select
+                                                    x-data="{ status: '{{ $canvas->status }}' }"
+                                                    x-model="status"
+                                                    x-on:change="$wire.updateStatus({{ $canvas->id }}, status)"
+                                                    class="text-xs font-medium rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg)] text-[var(--ui-secondary)] pl-2.5 pr-7 py-1.5 appearance-none cursor-pointer shadow-sm transition-all hover:border-[var(--ui-primary)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]"
+                                                    style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22%236b7280%22><path fill-rule=%22evenodd%22 d=%22M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z%22 clip-rule=%22evenodd%22/></svg>'); background-position: right 0.4rem center; background-repeat: no-repeat; background-size: 1rem;"
+                                                >
+                                                    @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $s)
+                                                    <option value="{{ $s }}">{{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$s] }}</option>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                         </x-ui-table-cell>
                                         <x-ui-table-cell compact="true">
