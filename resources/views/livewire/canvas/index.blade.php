@@ -61,7 +61,7 @@
                                 </x-ui-table-header>
                                 <x-ui-table-body>
                                     @foreach($grouped[$status] as $canvas)
-                                    <x-ui-table-row compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
+                                    <x-ui-table-row wire:key="canvas-{{ $canvas->id }}" compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
                                         <x-ui-table-cell compact="true">
                                             <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
                                             @if($canvas->description)
@@ -72,17 +72,15 @@
                                             <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
                                         </x-ui-table-cell>
                                         <x-ui-table-cell compact="true">
-                                            <select
-                                                wire:change="updateStatus({{ $canvas->id }}, $event.target.value)"
-                                                x-on:click.stop
-                                                class="text-xs rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg)] text-[var(--ui-secondary)] px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--ui-primary)]"
-                                            >
-                                                @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $s)
-                                                <option value="{{ $s }}" @selected($canvas->status === $s)>
-                                                    {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$s] }}
-                                                </option>
-                                                @endforeach
-                                            </select>
+                                            <div x-on:click.stop x-on:mousedown.stop>
+                                                <x-ui-input-select
+                                                    name="status_{{ $canvas->id }}"
+                                                    :options="\Platform\Canvas\Models\Canvas::STATUS_LABELS"
+                                                    :value="$canvas->status"
+                                                    size="xs"
+                                                    wire:change="updateStatus({{ $canvas->id }}, $event.target.value)"
+                                                />
+                                            </div>
                                         </x-ui-table-cell>
                                         <x-ui-table-cell compact="true">
                                             <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->createdByUser?->name ?? '-' }}</span>
