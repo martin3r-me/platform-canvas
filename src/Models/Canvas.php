@@ -29,6 +29,17 @@ class Canvas extends Model
         self::STATUS_ARCHIVED,
     ];
 
+    public const ACTIVE_STATUSES = [
+        self::STATUS_BACKLOG,
+        self::STATUS_IN_PROGRESS,
+        self::STATUS_REVIEW,
+    ];
+
+    public const DONE_STATUSES = [
+        self::STATUS_VALIDATED,
+        self::STATUS_ARCHIVED,
+    ];
+
     public const STATUS_LABELS = [
         self::STATUS_BACKLOG => 'Backlog',
         self::STATUS_IN_PROGRESS => 'In Arbeit',

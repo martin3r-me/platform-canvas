@@ -15,8 +15,36 @@
     <x-ui-page-container>
         <div class="space-y-6">
 
+            {{-- Tab-Switcher --}}
+            <div class="flex items-center gap-1 border-b border-[var(--ui-border)]">
+                <button
+                    wire:click="setView('active')"
+                    class="px-4 py-2.5 text-sm font-medium transition-colors relative {{ $view === 'active' ? 'text-[var(--ui-primary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                >
+                    Aktiv
+                    @if($activeCount > 0)
+                    <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full {{ $view === 'active' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)]' : 'bg-[var(--ui-muted)]/10 text-[var(--ui-muted)]' }}">{{ $activeCount }}</span>
+                    @endif
+                    @if($view === 'active')
+                    <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--ui-primary)] rounded-t"></span>
+                    @endif
+                </button>
+                <button
+                    wire:click="setView('done')"
+                    class="px-4 py-2.5 text-sm font-medium transition-colors relative {{ $view === 'done' ? 'text-[var(--ui-primary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                >
+                    Erledigt
+                    @if($doneCount > 0)
+                    <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full {{ $view === 'done' ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)]' : 'bg-[var(--ui-muted)]/10 text-[var(--ui-muted)]' }}">{{ $doneCount }}</span>
+                    @endif
+                    @if($view === 'done')
+                    <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--ui-primary)] rounded-t"></span>
+                    @endif
+                </button>
+            </div>
+
             {{-- Stats --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ count($visibleStatuses) + 1 }} gap-3">
                 <x-ui-dashboard-tile
                     title="Gesamt"
                     :count="$stats['total']"
@@ -25,7 +53,7 @@
                     variant="secondary"
                     size="lg"
                 />
-                @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $status)
+                @foreach($visibleStatuses as $status)
                 <x-ui-dashboard-tile
                     :title="\Platform\Canvas\Models\Canvas::STATUS_LABELS[$status]"
                     :count="$stats[$status]"
@@ -38,7 +66,7 @@
 
             {{-- Status Sections --}}
             @php $hasAnyCanvas = false; @endphp
-            @foreach(\Platform\Canvas\Models\Canvas::STATUSES as $status)
+            @foreach($visibleStatuses as $status)
                 @if($grouped[$status]->isNotEmpty())
                     @php $hasAnyCanvas = true; @endphp
                     <div>
@@ -105,9 +133,15 @@
             @if(! $hasAnyCanvas)
             <x-ui-panel>
                 <div class="p-12 text-center">
-                    @svg('heroicon-o-squares-2x2', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
-                    <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">Noch keine Canvases</h3>
-                    <p class="text-[var(--ui-muted)]">Erstelle dein erstes Canvas per Chat.</p>
+                    @if($view === 'active')
+                        @svg('heroicon-o-squares-2x2', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
+                        <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">Noch keine aktiven Canvases</h3>
+                        <p class="text-[var(--ui-muted)]">Erstelle dein erstes Canvas per Chat.</p>
+                    @else
+                        @svg('heroicon-o-check-badge', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
+                        <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">Keine erledigten Canvases</h3>
+                        <p class="text-[var(--ui-muted)]">Validierte und archivierte Canvases erscheinen hier.</p>
+                    @endif
                 </div>
             </x-ui-panel>
             @endif

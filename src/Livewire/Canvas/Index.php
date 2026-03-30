@@ -11,6 +11,7 @@ class Index extends Component
 {
     public string $search = '';
     public string $typeFilter = '';
+    public string $view = 'active';
 
     public function updateStatus(int $canvasId, string $status): void
     {
@@ -23,6 +24,13 @@ class Index extends Component
 
         $canvas = Canvas::forTeam($teamId)->findOrFail($canvasId);
         $canvas->update(['status' => $status]);
+    }
+
+    public function setView(string $view): void
+    {
+        if (in_array($view, ['active', 'done'])) {
+            $this->view = $view;
+        }
     }
 
     public function setTypeFilter(string $typeKey): void
@@ -66,23 +74,33 @@ class Index extends Component
 
         $allCanvases = $query->orderBy('updated_at', 'desc')->get();
 
+        // Counts für Tab-Badges
+        $activeCount = $allCanvases->whereIn('status', Canvas::ACTIVE_STATUSES)->count();
+        $doneCount = $allCanvases->whereIn('status', Canvas::DONE_STATUSES)->count();
+
+        // Nur die Statuses der aktiven Ansicht
+        $visibleStatuses = $this->view === 'active' ? Canvas::ACTIVE_STATUSES : Canvas::DONE_STATUSES;
+
         // Nach Status gruppieren (Funnel-Reihenfolge)
         $grouped = collect();
-        foreach (Canvas::STATUSES as $status) {
+        foreach ($visibleStatuses as $status) {
             $grouped[$status] = $allCanvases->where('status', $status)->values();
         }
 
-        // Stats
+        // Stats nur für sichtbare Statuses
         $stats = [];
-        foreach (Canvas::STATUSES as $status) {
+        foreach ($visibleStatuses as $status) {
             $stats[$status] = $grouped[$status]->count();
         }
-        $stats['total'] = $allCanvases->count();
+        $stats['total'] = collect($stats)->sum();
 
         return view('canvas::livewire.canvas.index', [
             'grouped' => $grouped,
             'canvasTypes' => $canvasTypes,
             'stats' => $stats,
+            'visibleStatuses' => $visibleStatuses,
+            'activeCount' => $activeCount,
+            'doneCount' => $doneCount,
         ])->layout('platform::layouts.app');
     }
 }
