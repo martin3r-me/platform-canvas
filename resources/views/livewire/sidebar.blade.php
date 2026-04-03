@@ -79,8 +79,13 @@
                             </button>
                             <div x-show="open" x-collapse class="flex flex-col gap-0.5 pl-4">
                                 @foreach($entityGroup['canvases'] as $canvas)
+                                    @php $sidebarColor = $canvas->color; @endphp
                                     <x-ui-sidebar-item :href="route('canvas.canvases.show', ['canvas' => $canvas])" :title="$canvas->name">
-                                        @svg('heroicon-o-squares-2x2', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
+                                        @if($sidebarColor)
+                                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $sidebarColor }}"></span>
+                                        @else
+                                            @svg('heroicon-o-squares-2x2', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
+                                        @endif
                                         <div class="flex-1 min-w-0 ml-2 flex items-center gap-1.5">
                                             <span class="truncate text-sm font-medium">{{ $canvas->name }}</span>
                                             @if($canvas->canvasType)
@@ -99,8 +104,13 @@
             @if($unlinkedCanvases->isNotEmpty())
                 <x-ui-sidebar-list label="Unverknuepft">
                     @foreach($unlinkedCanvases as $canvas)
+                        @php $sidebarColor = $canvas->color; @endphp
                         <x-ui-sidebar-item :href="route('canvas.canvases.show', ['canvas' => $canvas])" :title="$canvas->name">
-                            @svg('heroicon-o-squares-2x2', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
+                            @if($sidebarColor)
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $sidebarColor }}"></span>
+                            @else
+                                @svg('heroicon-o-squares-2x2', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
+                            @endif
                             <div class="flex-1 min-w-0 ml-2 flex items-center gap-1.5">
                                 <span class="truncate text-sm font-medium">{{ $canvas->name }}</span>
                                 @if($canvas->canvasType)

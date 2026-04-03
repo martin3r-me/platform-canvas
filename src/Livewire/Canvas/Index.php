@@ -3,6 +3,7 @@
 namespace Platform\Canvas\Livewire\Canvas;
 
 use Livewire\Component;
+use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Models\CanvasType;
@@ -10,7 +11,10 @@ use Platform\Canvas\Models\CanvasType;
 class Index extends Component
 {
     public string $search = '';
+
+    #[Url(as: 'type')]
     public string $typeFilter = '';
+
     public string $view = 'active';
 
     public function updateStatus(int $canvasId, string $status): void
@@ -23,7 +27,12 @@ class Index extends Component
         $teamId = $user->currentTeam?->id;
 
         $canvas = Canvas::forTeam($teamId)->findOrFail($canvasId);
-        $canvas->update(['status' => $status]);
+
+        if (! $canvas->canTransitionTo($status)) {
+            return;
+        }
+
+        $canvas->transitionTo($status);
     }
 
     public function setView(string $view): void
@@ -61,7 +70,7 @@ class Index extends Component
         $canvasTypes = CanvasType::availableForTeam($teamId)->get();
 
         $query = Canvas::forTeam($teamId)
-            ->with('canvasType', 'createdByUser')
+            ->with(['canvasType', 'createdByUser', 'tags', 'contextColors'])
             ->withCount('buildingBlocks');
 
         if ($this->search) {
@@ -74,9 +83,17 @@ class Index extends Component
 
         $allCanvases = $query->orderBy('updated_at', 'desc')->get();
 
-        // Counts für Tab-Badges
+        // Counts fuer Tab-Badges
         $activeCount = $allCanvases->whereIn('status', Canvas::ACTIVE_STATUSES)->count();
         $doneCount = $allCanvases->whereIn('status', Canvas::DONE_STATUSES)->count();
+
+        // Typ-Counts fuer Chips (ueber alle, unabhaengig von typeFilter)
+        $typeCounts = Canvas::forTeam($teamId)
+            ->with('canvasType')
+            ->get()
+            ->groupBy(fn ($c) => $c->canvasType?->key ?? '_none')
+            ->map->count();
+        $totalCount = $typeCounts->sum();
 
         // Nur die Statuses der aktiven Ansicht
         $visibleStatuses = $this->view === 'active' ? Canvas::ACTIVE_STATUSES : Canvas::DONE_STATUSES;
@@ -87,7 +104,7 @@ class Index extends Component
             $grouped[$status] = $allCanvases->where('status', $status)->values();
         }
 
-        // Stats nur für sichtbare Statuses
+        // Stats nur fuer sichtbare Statuses
         $stats = [];
         foreach ($visibleStatuses as $status) {
             $stats[$status] = $grouped[$status]->count();
@@ -101,6 +118,8 @@ class Index extends Component
             'visibleStatuses' => $visibleStatuses,
             'activeCount' => $activeCount,
             'doneCount' => $doneCount,
+            'typeCounts' => $typeCounts,
+            'totalCount' => $totalCount,
         ])->layout('platform::layouts.app');
     }
 }

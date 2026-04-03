@@ -6,6 +6,9 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Services\AnalysisService;
+use Platform\Canvas\Services\CommentService;
+use Platform\Organization\Models\OrganizationContext;
+use Platform\Organization\Models\OrganizationEntityLink;
 
 class Show extends Component
 {
@@ -55,34 +58,15 @@ class Show extends Component
             'replyToId' => 'nullable|integer|exists:canvas_comments,id',
         ]);
 
-        if ($this->commentBlockId) {
-            $blockBelongsToCanvas = $this->canvas->buildingBlocks()
-                ->where('id', $this->commentBlockId)
-                ->exists();
-
-            if (! $blockBelongsToCanvas) {
-                return;
-            }
+        try {
+            (new CommentService())->addComment($this->canvas, [
+                'content' => $this->commentContent,
+                'building_block_id' => $this->replyToId ? null : $this->commentBlockId,
+                'parent_id' => $this->replyToId,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return;
         }
-
-        if ($this->replyToId) {
-            $parentComment = $this->canvas->comments()
-                ->whereNull('parent_id')
-                ->where('id', $this->replyToId)
-                ->first();
-
-            if (! $parentComment) {
-                return;
-            }
-        }
-
-        $this->canvas->comments()->create([
-            'content' => $this->commentContent,
-            'building_block_id' => $this->replyToId
-                ? $this->canvas->comments()->find($this->replyToId)?->building_block_id
-                : $this->commentBlockId,
-            'parent_id' => $this->replyToId,
-        ]);
 
         $this->reset('commentContent', 'commentBlockId', 'replyToId');
     }
@@ -100,14 +84,7 @@ class Show extends Component
 
     public function deleteComment(int $commentId): void
     {
-        $comment = $this->canvas->comments()->where('id', $commentId)->first();
-
-        if (! $comment) {
-            return;
-        }
-
-        $comment->replies()->delete();
-        $comment->delete();
+        (new CommentService())->deleteComment($this->canvas, $commentId);
     }
 
     public function filterByBlock(?int $blockId): void
@@ -115,26 +92,66 @@ class Show extends Component
         $this->filterBlockId = $blockId;
     }
 
+    protected function loadEntityLinks(): array
+    {
+        $links = [];
+        $morphTypes = ['canvas', Canvas::class];
+
+        try {
+            $contexts = OrganizationContext::query()
+                ->whereIn('contextable_type', $morphTypes)
+                ->where('contextable_id', $this->canvas->id)
+                ->where('is_active', true)
+                ->with(['organizationEntity.type'])
+                ->get();
+
+            foreach ($contexts as $ctx) {
+                if ($ctx->organizationEntity) {
+                    $links[] = [
+                        'name' => $ctx->organizationEntity->name,
+                        'type' => $ctx->organizationEntity->type?->name ?? 'Entity',
+                        'icon' => $ctx->organizationEntity->type?->icon,
+                    ];
+                }
+            }
+
+            $entityLinks = OrganizationEntityLink::query()
+                ->whereIn('linkable_type', $morphTypes)
+                ->where('linkable_id', $this->canvas->id)
+                ->with(['entity.type'])
+                ->get();
+
+            foreach ($entityLinks as $link) {
+                if ($link->entity) {
+                    $links[] = [
+                        'name' => $link->entity->name,
+                        'type' => $link->entity->type?->name ?? 'Entity',
+                        'icon' => $link->entity->type?->icon,
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Organization module not available
+        }
+
+        return collect($links)->unique('name')->values()->toArray();
+    }
+
     public function render()
     {
-        $this->canvas->load(['canvasType', 'buildingBlocks.entries', 'createdByUser', 'snapshots']);
+        $this->canvas->load(['canvasType', 'buildingBlocks.entries', 'createdByUser', 'snapshots', 'tags', 'contextColors']);
 
         $canvasData = $this->canvas->toCanvasArray();
         $analysisData = (new AnalysisService())->analyze($this->canvas);
         $layout = $this->canvas->canvasType?->layout ?? [];
         $blockDefs = $this->canvas->canvasType?->block_definitions ?? [];
 
-        $commentsQuery = $this->canvas->comments()
-            ->rootComments()
-            ->with(['replies.buildingBlock', 'buildingBlock'])
-            ->orderBy('created_at', 'desc');
-
-        if ($this->filterBlockId) {
-            $commentsQuery->where('building_block_id', $this->filterBlockId);
-        }
-
-        $comments = $commentsQuery->get();
+        $commentService = new CommentService();
+        $comments = $commentService->getCommentsForCanvas($this->canvas, $this->filterBlockId);
         $allComments = $this->canvas->comments()->get();
+
+        // Entity-Links laden
+        $entityLinks = $this->loadEntityLinks();
 
         return view('canvas::livewire.canvas.show', [
             'canvasData' => $canvasData,
@@ -143,6 +160,7 @@ class Show extends Component
             'blockDefs' => $blockDefs,
             'comments' => $comments,
             'allComments' => $allComments,
+            'entityLinks' => $entityLinks,
         ])->layout('platform::layouts.app');
     }
 }

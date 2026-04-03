@@ -86,43 +86,39 @@ class CanvasServiceProvider extends ServiceProvider
         try {
             $registry = resolve(\Platform\Core\Tools\ToolRegistry::class);
 
-            // Overview
-            $registry->register(new \Platform\Canvas\Tools\CanvasOverviewTool());
+            // Utility
+            $registry->register(new \Platform\Canvas\Tools\Utility\CanvasOverviewTool());
+            $registry->register(new \Platform\Canvas\Tools\Utility\AnalyzeTool());
+            $registry->register(new \Platform\Canvas\Tools\Utility\ExportCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Utility\ListCommentsTool());
 
             // Canvas-Type CRUD
-            $registry->register(new \Platform\Canvas\Tools\ListTypesTool());
-            $registry->register(new \Platform\Canvas\Tools\GetTypeTool());
-            $registry->register(new \Platform\Canvas\Tools\CreateTypeTool());
-            $registry->register(new \Platform\Canvas\Tools\UpdateTypeTool());
-            $registry->register(new \Platform\Canvas\Tools\DeleteTypeTool());
+            $registry->register(new \Platform\Canvas\Tools\Type\ListTypesTool());
+            $registry->register(new \Platform\Canvas\Tools\Type\GetTypeTool());
+            $registry->register(new \Platform\Canvas\Tools\Type\CreateTypeTool());
+            $registry->register(new \Platform\Canvas\Tools\Type\UpdateTypeTool());
+            $registry->register(new \Platform\Canvas\Tools\Type\DeleteTypeTool());
 
             // Canvas CRUD
-            $registry->register(new \Platform\Canvas\Tools\ListCanvasesTool());
-            $registry->register(new \Platform\Canvas\Tools\GetCanvasTool());
-            $registry->register(new \Platform\Canvas\Tools\CreateCanvasTool());
-            $registry->register(new \Platform\Canvas\Tools\UpdateCanvasTool());
-            $registry->register(new \Platform\Canvas\Tools\DeleteCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Canvas\ListCanvasesTool());
+            $registry->register(new \Platform\Canvas\Tools\Canvas\GetCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Canvas\CreateCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Canvas\UpdateCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Canvas\DeleteCanvasTool());
 
             // Entry CRUD
-            $registry->register(new \Platform\Canvas\Tools\ListEntriesTool());
-            $registry->register(new \Platform\Canvas\Tools\CreateEntryTool());
-            $registry->register(new \Platform\Canvas\Tools\UpdateEntryTool());
-            $registry->register(new \Platform\Canvas\Tools\DeleteEntryTool());
-            $registry->register(new \Platform\Canvas\Tools\BulkCreateEntriesTool());
-            $registry->register(new \Platform\Canvas\Tools\ReorderEntriesTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\ListEntriesTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\CreateEntryTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\UpdateEntryTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\DeleteEntryTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\BulkCreateEntriesTool());
+            $registry->register(new \Platform\Canvas\Tools\Entry\ReorderEntriesTool());
 
             // Snapshots
-            $registry->register(new \Platform\Canvas\Tools\CreateSnapshotTool());
-            $registry->register(new \Platform\Canvas\Tools\ListSnapshotsTool());
-            $registry->register(new \Platform\Canvas\Tools\GetSnapshotTool());
-            $registry->register(new \Platform\Canvas\Tools\CompareSnapshotsTool());
-
-            // Comments
-            $registry->register(new \Platform\Canvas\Tools\ListCommentsTool());
-
-            // Utilities
-            $registry->register(new \Platform\Canvas\Tools\AnalyzeTool());
-            $registry->register(new \Platform\Canvas\Tools\ExportCanvasTool());
+            $registry->register(new \Platform\Canvas\Tools\Snapshot\CreateSnapshotTool());
+            $registry->register(new \Platform\Canvas\Tools\Snapshot\ListSnapshotsTool());
+            $registry->register(new \Platform\Canvas\Tools\Snapshot\GetSnapshotTool());
+            $registry->register(new \Platform\Canvas\Tools\Snapshot\CompareSnapshotsTool());
         } catch (\Throwable $e) {
             \Log::warning('Canvas: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
         }

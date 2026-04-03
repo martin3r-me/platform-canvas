@@ -11,10 +11,31 @@
             ['label' => $canvas->name],
         ]">
             <x-slot name="left">
+                @php $showColor = $canvas->color; @endphp
+                @if($showColor)
+                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ $showColor }}"></span>
+                @endif
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[rgb(var(--ui-primary-rgb))]/10 text-[rgb(var(--ui-primary-rgb))] border border-[rgb(var(--ui-primary-rgb))]/20">
                     @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
                     {{ $canvas->canvasType?->name ?? 'Canvas' }}
                 </span>
+                @if($canvas->tags->isNotEmpty())
+                    @foreach($canvas->tags as $tag)
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--ui-muted-5)] text-[var(--ui-muted)] border border-[var(--ui-border)]/30">{{ $tag->name }}</span>
+                    @endforeach
+                @endif
+                @if(!empty($entityLinks))
+                    @foreach($entityLinks as $entityLink)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        @if($entityLink['icon'] && str_starts_with($entityLink['icon'], 'heroicon-'))
+                            @svg($entityLink['icon'], 'w-3 h-3')
+                        @else
+                            @svg('heroicon-o-link', 'w-3 h-3')
+                        @endif
+                        {{ $entityLink['name'] }}
+                    </span>
+                    @endforeach
+                @endif
                 <a href="{{ route('canvas.canvases.pdf', $canvas) }}" target="_blank">
                     <x-ui-button variant="ghost" size="sm">
                         @svg('heroicon-o-arrow-down-tray', 'w-4 h-4')

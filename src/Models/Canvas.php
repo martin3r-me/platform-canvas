@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Platform\ActivityLog\Traits\LogsActivity;
+use Platform\Core\Traits\HasColors;
+use Platform\Core\Traits\HasTags;
 use Symfony\Component\Uid\UuidV7;
 
 class Canvas extends Model
 {
-    use LogsActivity, SoftDeletes;
+    use LogsActivity, SoftDeletes, HasTags, HasColors;
 
     // Status-Konstanten (Funnel-Reihenfolge)
     public const STATUS_BACKLOG = 'backlog';
@@ -172,6 +174,37 @@ class Canvas extends Model
         }
 
         return route('canvas.public.show', $this->public_token);
+    }
+
+    // Status Transitions
+
+    public const TRANSITIONS = [
+        self::STATUS_BACKLOG => [self::STATUS_IN_PROGRESS, self::STATUS_ARCHIVED],
+        self::STATUS_IN_PROGRESS => [self::STATUS_REVIEW, self::STATUS_BACKLOG, self::STATUS_ARCHIVED],
+        self::STATUS_REVIEW => [self::STATUS_VALIDATED, self::STATUS_IN_PROGRESS, self::STATUS_ARCHIVED],
+        self::STATUS_VALIDATED => [self::STATUS_ARCHIVED],
+        self::STATUS_ARCHIVED => [],
+    ];
+
+    public function allowedTransitions(): array
+    {
+        return self::TRANSITIONS[$this->status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->allowedTransitions());
+    }
+
+    public function transitionTo(string $status): void
+    {
+        if (! $this->canTransitionTo($status)) {
+            throw new \InvalidArgumentException(
+                "Uebergang von '{$this->status}' nach '{$status}' ist nicht erlaubt."
+            );
+        }
+
+        $this->update(['status' => $status]);
     }
 
     /**
