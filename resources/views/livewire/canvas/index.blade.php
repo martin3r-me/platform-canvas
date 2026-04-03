@@ -11,7 +11,7 @@
         ]" />
 
         {{-- Typ-Filter + Tabs --}}
-        <div class="sticky top-[5.75rem] z-20 px-4 bg-[var(--ui-surface)]/90 border-b border-[var(--ui-border)]/40 backdrop-blur">
+        <div class="px-4 bg-[var(--ui-surface)]/90 border-b border-[var(--ui-border)]/40 backdrop-blur">
             <div class="flex items-center justify-between gap-4 h-10">
                 {{-- Links: Typ-Filter Chips --}}
                 <div class="flex items-center gap-1.5 min-w-0 overflow-x-auto">
