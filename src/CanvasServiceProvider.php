@@ -25,6 +25,14 @@ class CanvasServiceProvider extends ServiceProvider
             'canvas' => \Platform\Canvas\Models\Canvas::class,
         ]);
 
+        // EntityLinkProvider registrieren (loose Kopplung mit Organization-Modul)
+        try {
+            resolve(\Platform\Organization\Services\EntityLinkRegistry::class)
+                ->register(new \Platform\Canvas\Organization\CanvasEntityLinkProvider());
+        } catch (\Throwable $e) {
+            // Organization-Modul nicht geladen
+        }
+
         // Step 1: Load config
         $this->mergeConfigFrom(__DIR__ . '/../config/canvas.php', 'canvas');
 
@@ -37,6 +45,7 @@ class CanvasServiceProvider extends ServiceProvider
             PlatformCore::registerModule([
                 'key' => 'canvas',
                 'title' => 'Canvas',
+                'group' => 'content',
                 'routing' => config('canvas.routing'),
                 'guard' => config('canvas.guard'),
                 'navigation' => config('canvas.navigation'),
