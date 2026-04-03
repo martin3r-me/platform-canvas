@@ -15,7 +15,7 @@ class CanvasEntityLinkProvider implements EntityLinkProvider
     public function linkTypeConfig(): array
     {
         return [
-            'canvas' => ['label' => 'Canvas', 'icon' => 'squares-2x2', 'route' => null],
+            'canvas' => ['label' => 'Canvas', 'singular' => 'Canvas', 'icon' => 'squares-2x2', 'route' => null],
         ];
     }
 
@@ -43,6 +43,11 @@ class CanvasEntityLinkProvider implements EntityLinkProvider
     }
 
     public function timeTrackableCascades(): array
+    {
+        return [];
+    }
+
+    public function activityChildren(string $morphAlias, array $linkableIds): array
     {
         return [];
     }
