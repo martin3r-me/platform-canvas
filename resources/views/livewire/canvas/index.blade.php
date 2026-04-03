@@ -8,37 +8,37 @@
         <x-ui-page-actionbar :breadcrumbs="[
             ['label' => 'Canvas', 'href' => route('canvas.dashboard'), 'icon' => 'squares-2x2'],
             ['label' => 'Canvases'],
-        ]">
-            <x-slot name="below">
-                {{-- Typ-Filter Chips --}}
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <button
-                        wire:click="setTypeFilter('')"
-                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {{ $typeFilter === '' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]/80' }}"
-                    >
-                        Alle
-                        <span class="ml-1 opacity-70">({{ $totalCount }})</span>
-                    </button>
-                    @foreach($canvasTypes as $type)
-                        @php $count = $typeCounts[$type->key] ?? 0; @endphp
-                        @if($count > 0)
-                        <button
-                            wire:click="setTypeFilter('{{ $type->key }}')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {{ $typeFilter === $type->key ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]/80' }}"
-                        >
-                            {{ $type->name }}
-                            <span class="ml-1 opacity-70">({{ $count }})</span>
-                        </button>
-                        @endif
-                    @endforeach
-                </div>
-            </x-slot>
-        </x-ui-page-actionbar>
+        ]" />
     </x-slot>
 
     {{-- Main Content --}}
     <x-ui-page-container>
         <div class="space-y-6">
+
+            {{-- Typ-Filter Chips --}}
+            @if($canvasTypes->count() > 1)
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <button
+                    wire:click="setTypeFilter('')"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {{ $typeFilter === '' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]/80' }}"
+                >
+                    Alle
+                    <span class="ml-1 opacity-70">({{ $totalCount }})</span>
+                </button>
+                @foreach($canvasTypes as $type)
+                    @php $count = $typeCounts[$type->key] ?? 0; @endphp
+                    @if($count > 0)
+                    <button
+                        wire:click="setTypeFilter('{{ $type->key }}')"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {{ $typeFilter === $type->key ? 'bg-[rgb(var(--ui-primary-rgb))] text-white shadow-sm' : 'bg-[var(--ui-muted-5)] text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)]/80' }}"
+                    >
+                        {{ $type->name }}
+                        <span class="ml-1 opacity-70">({{ $count }})</span>
+                    </button>
+                    @endif
+                @endforeach
+            </div>
+            @endif
 
             {{-- Tab-Switcher --}}
             <div class="flex items-center gap-1 border-b border-[var(--ui-border)]">
