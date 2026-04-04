@@ -280,7 +280,7 @@
 
     {{-- Left Sidebar: Kommentare --}}
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Kommentare ({{ $allComments->count() }})" width="w-80" :defaultOpen="true" storeKey="commentsOpen">
+        <x-ui-page-sidebar title="Kommentare ({{ $allComments->count() }})" width="w-80" :defaultOpen="true" storeKey="sidebarOpen">
             <div class="p-4 space-y-4">
                 {{-- Block Filter Chips --}}
                 <div class="overflow-x-auto -mx-4 px-4">
