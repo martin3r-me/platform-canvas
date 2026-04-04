@@ -78,7 +78,26 @@ class CanvasSidebarService
         }
         $linkedCanvasIds = array_unique($linkedCanvasIds);
 
-        // Gruppieren: EntityType -> Entity -> Canvases
+        // Aufwärts-Traversierung: Ancestors ins Entity-Set aufnehmen
+        $directEntityIds = array_keys($entityCanvasMap);
+        if (!empty($directEntityIds)) {
+            $directEntities = OrganizationEntity::with(['allParents.type'])
+                ->whereIn('id', $directEntityIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($directEntities as $entityId => $entity) {
+                $ancestor = $entity->allParents;
+                while ($ancestor) {
+                    if (!isset($entityCanvasMap[$ancestor->id])) {
+                        $entityCanvasMap[$ancestor->id] = [];
+                    }
+                    $ancestor = $ancestor->allParents;
+                }
+            }
+        }
+
+        // Gruppieren: EntityType → Entity-Baum → Canvases
         $entityTypeGroups = collect();
 
         $entityIds = array_keys($entityCanvasMap);
@@ -88,12 +107,83 @@ class CanvasSidebarService
                 ->get()
                 ->keyBy('id');
 
+            $entityChildrenMap = [];
+            $rootEntityIds = [];
+
+            foreach ($entities as $entity) {
+                $parentId = $entity->parent_entity_id;
+                if ($parentId && $entities->has($parentId)) {
+                    $entityChildrenMap[$parentId][] = $entity->id;
+                } else {
+                    $rootEntityIds[] = $entity->id;
+                }
+            }
+
+            $buildTree = function (int $entityId) use (&$buildTree, $entities, $entityChildrenMap, $entityCanvasMap, $canvasesToShow): ?array {
+                $entity = $entities->get($entityId);
+                if (!$entity) {
+                    return null;
+                }
+
+                $childIds = $entityChildrenMap[$entityId] ?? [];
+                $childNodes = collect($childIds)
+                    ->map(fn ($childId) => $buildTree($childId))
+                    ->filter();
+
+                $childrenByType = $childNodes
+                    ->groupBy(fn ($child) => $child['type_id'])
+                    ->map(function ($group) use ($entities) {
+                        $firstChild = $group->first();
+                        $typeEntity = $entities->get($firstChild['entity_id']);
+                        $type = $typeEntity?->type;
+
+                        return [
+                            'type_id' => $firstChild['type_id'],
+                            'type_name' => $type?->name ?? 'Sonstige',
+                            'type_icon' => $type?->icon ?? null,
+                            'sort_order' => $type?->sort_order ?? 999,
+                            'children' => $group->sortBy('entity_name')->values(),
+                        ];
+                    })
+                    ->sortBy('sort_order')
+                    ->values();
+
+                $items = collect($entityCanvasMap[$entityId] ?? [])
+                    ->map(fn ($cid) => $canvasesToShow->firstWhere('id', $cid))
+                    ->filter()
+                    ->values();
+
+                $totalItems = $items->count();
+                foreach ($childNodes as $child) {
+                    $totalItems += $child['total_items'];
+                }
+
+                if ($totalItems === 0) {
+                    return null;
+                }
+
+                return [
+                    'entity_id' => $entityId,
+                    'entity_name' => $entity->name,
+                    'type_id' => $entity->type?->id,
+                    'items' => $items,
+                    'children_by_type' => $childrenByType,
+                    'total_items' => $totalItems,
+                ];
+            };
+
             $groupedByType = [];
-            foreach ($entityCanvasMap as $entityId => $canvasIdsList) {
+            foreach ($rootEntityIds as $entityId) {
                 $entity = $entities->get($entityId);
                 if (!$entity || !$entity->type) {
                     continue;
                 }
+
+                $tree = $buildTree($entityId);
+                if (!$tree) {
+                    continue;
+                }
+
                 $typeId = $entity->type->id;
                 if (!isset($groupedByType[$typeId])) {
                     $groupedByType[$typeId] = [
@@ -104,19 +194,7 @@ class CanvasSidebarService
                         'entities' => [],
                     ];
                 }
-                if (!isset($groupedByType[$typeId]['entities'][$entityId])) {
-                    $groupedByType[$typeId]['entities'][$entityId] = [
-                        'entity_id' => $entityId,
-                        'entity_name' => $entity->name,
-                        'canvases' => collect(),
-                    ];
-                }
-                foreach ($canvasIdsList as $cid) {
-                    $canvas = $canvasesToShow->firstWhere('id', $cid);
-                    if ($canvas) {
-                        $groupedByType[$typeId]['entities'][$entityId]['canvases']->push($canvas);
-                    }
-                }
+                $groupedByType[$typeId]['entities'][] = $tree;
             }
 
             $entityTypeGroups = collect($groupedByType)
