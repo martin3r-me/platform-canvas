@@ -36,26 +36,34 @@
                     @endif
                 </div>
 
-                {{-- Rechts: Aktiv / Erledigt Tabs --}}
-                <div class="flex items-center gap-1 flex-shrink-0">
-                    <button
-                        wire:click="setView('active')"
-                        class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'active' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
-                    >
-                        Aktiv
-                        @if($activeCount > 0)
-                        <span class="ml-1 opacity-60">{{ $activeCount }}</span>
-                        @endif
-                    </button>
-                    <button
-                        wire:click="setView('done')"
-                        class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'done' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
-                    >
-                        Erledigt
-                        @if($doneCount > 0)
-                        <span class="ml-1 opacity-60">{{ $doneCount }}</span>
-                        @endif
-                    </button>
+                {{-- Rechts: Suche + Aktiv / Erledigt Tabs --}}
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <x-ui-input-text
+                        wire:model.live.debounce.300ms="search"
+                        placeholder="Suchen..."
+                        size="sm"
+                        class="w-44"
+                    />
+                    <div class="flex items-center gap-1">
+                        <button
+                            wire:click="setView('active')"
+                            class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'active' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                        >
+                            Aktiv
+                            @if($activeCount > 0)
+                            <span class="ml-1 opacity-60">{{ $activeCount }}</span>
+                            @endif
+                        </button>
+                        <button
+                            wire:click="setView('done')"
+                            class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'done' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                        >
+                            Erledigt
+                            @if($doneCount > 0)
+                            <span class="ml-1 opacity-60">{{ $doneCount }}</span>
+                            @endif
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -193,20 +201,4 @@
         </div>
     </x-ui-page-container>
 
-    {{-- Left Sidebar --}}
-    <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Filter" width="w-72" :defaultOpen="true">
-            <div class="p-5 space-y-5">
-                {{-- Search --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Suche</h3>
-                    <x-ui-input-text
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Canvas suchen..."
-                        size="sm"
-                    />
-                </div>
-            </div>
-        </x-ui-page-sidebar>
-    </x-slot>
 </x-ui-page>

@@ -80,6 +80,137 @@
 
     {{-- Main Content --}}
     <x-ui-page-container padding="p-0" spacing="" background="">
+        {{-- Meta-Infos --}}
+        <div class="px-4 sm:px-6 py-4 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/50">
+            <div class="flex flex-wrap items-start gap-6">
+                {{-- Status --}}
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-[var(--ui-muted)]">Status</span>
+                    <x-ui-badge :variant="\Platform\Canvas\Models\Canvas::STATUS_VARIANTS[$canvas->status] ?? 'secondary'">
+                        {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$canvas->status] ?? $canvas->status }}
+                    </x-ui-badge>
+                </div>
+
+                {{-- Ampel (traffic_light strategy) --}}
+                @if(($analysisData['strategy'] ?? null) === 'traffic_light')
+                <div class="flex items-center gap-2">
+                    <span class="inline-block w-4 h-4 rounded-full flex-shrink-0 {{ match($analysisData['color'] ?? 'red') { 'green' => 'bg-green-500', 'yellow' => 'bg-yellow-500', default => 'bg-red-500' } }}"></span>
+                    <span class="text-xs font-semibold text-[var(--ui-secondary)]">{{ $analysisData['score'] ?? 0 }}%</span>
+                    <span class="text-xs text-[var(--ui-muted)]">
+                        {{ match($analysisData['color'] ?? 'red') { 'green' => 'Auf Kurs', 'yellow' => 'Aufmerksamkeit noetig', default => 'Kritisch' } }}
+                    </span>
+                </div>
+                @endif
+
+                {{-- Creator --}}
+                <div class="flex items-center gap-1.5 text-xs text-[var(--ui-muted)]">
+                    @svg('heroicon-o-user', 'w-3.5 h-3.5')
+                    {{ $canvas->createdByUser?->name ?? 'Unbekannt' }}
+                </div>
+
+                {{-- Date --}}
+                <div class="flex items-center gap-1.5 text-xs text-[var(--ui-muted)]">
+                    @svg('heroicon-o-calendar', 'w-3.5 h-3.5')
+                    {{ $canvas->created_at?->format('d.m.Y H:i') }}
+                </div>
+
+                {{-- Completeness --}}
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-[var(--ui-muted)]">Fortschritt</span>
+                    @php
+                        $barColor = match($analysisData['strategy'] ?? 'basic') {
+                            'completeness' => match($analysisData['health'] ?? 'empty') {
+                                'good' => 'bg-green-500',
+                                'partial' => 'bg-yellow-500',
+                                'minimal' => 'bg-orange-500',
+                                default => 'bg-[var(--ui-muted)]',
+                            },
+                            'traffic_light' => match($analysisData['color'] ?? 'red') {
+                                'green' => 'bg-green-500',
+                                'yellow' => 'bg-yellow-500',
+                                default => 'bg-red-500',
+                            },
+                            default => 'bg-blue-500',
+                        };
+                    @endphp
+                    <div class="w-24 h-2 rounded-full bg-[var(--ui-muted-5)]">
+                        <div class="h-2 rounded-full transition-all {{ $barColor }}"
+                             style="width: {{ $analysisData['completeness_percent'] ?? 0 }}%"></div>
+                    </div>
+                    <span class="text-xs font-semibold text-[var(--ui-secondary)]">{{ $analysisData['completeness_percent'] ?? 0 }}%</span>
+                </div>
+
+                {{-- Stats --}}
+                <div class="flex items-center gap-3 text-xs text-[var(--ui-muted)]">
+                    <span>{{ $analysisData['filled_blocks'] ?? 0 }}/{{ $analysisData['total_blocks'] ?? 0 }} Bloecke</span>
+                    <span>{{ $analysisData['total_entries'] ?? 0 }} Eintraege</span>
+                    @if(($analysisData['strategy'] ?? null) === 'completeness')
+                        <x-ui-badge :variant="match($analysisData['health'] ?? 'empty') { 'good' => 'success', 'partial' => 'warning', default => 'danger' }" size="sm">
+                            {{ ucfirst($analysisData['health'] ?? 'empty') }}
+                        </x-ui-badge>
+                    @endif
+                    @if(($analysisData['strategy'] ?? null) === 'traffic_light')
+                        <span>{{ $analysisData['risk_count'] ?? 0 }} Risiken</span>
+                        @if(($analysisData['overdue_milestones'] ?? 0) > 0)
+                            <span class="text-red-600 font-medium">{{ $analysisData['overdue_milestones'] }} Ueberfaellig</span>
+                        @endif
+                    @endif
+                </div>
+            </div>
+
+            {{-- Description --}}
+            @if($canvas->description)
+            <p class="mt-2 text-xs text-[var(--ui-muted)] leading-relaxed">{{ $canvas->description }}</p>
+            @endif
+
+            {{-- Warnings (traffic_light) --}}
+            @if(!empty($analysisData['warnings'] ?? []))
+            <div class="mt-3 flex flex-wrap gap-2">
+                @foreach($analysisData['warnings'] as $warning)
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20">
+                    @svg('heroicon-o-exclamation-triangle', 'w-3.5 h-3.5 text-yellow-600 flex-shrink-0')
+                    <span class="text-[11px] text-[var(--ui-secondary)]">{{ $warning }}</span>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            {{-- Recommendations (completeness) --}}
+            @if(($analysisData['strategy'] ?? null) === 'completeness' && !empty($analysisData['missing_blocks'] ?? []))
+            <div class="mt-3">
+                <details class="group">
+                    <summary class="text-xs font-medium text-[var(--ui-muted)] cursor-pointer hover:text-[var(--ui-secondary)]">
+                        {{ count($analysisData['missing_blocks']) }} fehlende Bloecke anzeigen
+                    </summary>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach($analysisData['missing_blocks'] as $missing)
+                        <div class="px-2.5 py-1.5 rounded-lg bg-[var(--ui-muted-5)]/50 border border-[var(--ui-border)]/40">
+                            <div class="text-xs font-semibold text-[var(--ui-secondary)]">{{ $missing['label'] }}</div>
+                            @foreach($missing['guiding_questions'] ?? [] as $question)
+                            <div class="text-[11px] text-[var(--ui-muted)] flex items-start gap-1 mt-0.5">
+                                @svg('heroicon-o-question-mark-circle', 'w-3 h-3 mt-0.5 flex-shrink-0')
+                                {{ $question }}
+                            </div>
+                            @endforeach
+                        </div>
+                        @endforeach
+                    </div>
+                </details>
+            </div>
+            @endif
+
+            @if(($analysisData['strategy'] ?? null) === 'completeness' && !empty($analysisData['recommendations'] ?? []))
+            <div class="mt-2 flex flex-wrap gap-2">
+                @foreach($analysisData['recommendations'] as $rec)
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20">
+                    @svg('heroicon-o-light-bulb', 'w-3.5 h-3.5 text-yellow-600 flex-shrink-0')
+                    <span class="text-[11px] text-[var(--ui-secondary)]">{{ $rec }}</span>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+
         <div x-data="blockNav()" x-init="init()">
             {{-- Block Navigation --}}
             <div class="sticky top-0 z-20 border-b border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/95 backdrop-blur-sm">
@@ -146,188 +277,9 @@
         </script>
     </x-ui-page-container>
 
-    {{-- Left Sidebar --}}
+    {{-- Left Sidebar: Kommentare --}}
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Canvas Info" width="w-72" :defaultOpen="true">
-            <div class="p-5 space-y-5">
-                {{-- Status --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Status</h3>
-                    <x-ui-badge :variant="\Platform\Canvas\Models\Canvas::STATUS_VARIANTS[$canvas->status] ?? 'secondary'">
-                        {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$canvas->status] ?? $canvas->status }}
-                    </x-ui-badge>
-                </div>
-
-                {{-- Ampel (traffic_light strategy) --}}
-                @if(($analysisData['strategy'] ?? null) === 'traffic_light')
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Ampel</h3>
-                    <div class="d-flex items-center gap-3 p-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40">
-                        <span class="inline-block w-6 h-6 rounded-full flex-shrink-0 {{ match($analysisData['color'] ?? 'red') { 'green' => 'bg-green-500', 'yellow' => 'bg-yellow-500', default => 'bg-red-500' } }}"></span>
-                        <div>
-                            <div class="text-sm font-bold text-[var(--ui-secondary)]">{{ $analysisData['score'] ?? 0 }}%</div>
-                            <div class="text-[11px] text-[var(--ui-muted)]">
-                                {{ match($analysisData['color'] ?? 'red') { 'green' => 'Auf Kurs', 'yellow' => 'Aufmerksamkeit noetig', default => 'Kritisch' } }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endif
-
-                {{-- Creator & Date --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Details</h3>
-                    <div class="space-y-2 text-xs text-[var(--ui-muted)]">
-                        <div class="d-flex items-center gap-2">
-                            @svg('heroicon-o-user', 'w-3.5 h-3.5')
-                            {{ $canvas->createdByUser?->name ?? 'Unbekannt' }}
-                        </div>
-                        <div class="d-flex items-center gap-2">
-                            @svg('heroicon-o-calendar', 'w-3.5 h-3.5')
-                            {{ $canvas->created_at?->format('d.m.Y H:i') }}
-                        </div>
-                        <div class="d-flex items-center gap-2">
-                            @svg('heroicon-o-squares-2x2', 'w-3.5 h-3.5')
-                            {{ $canvas->canvasType?->name ?? '-' }}
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Description --}}
-                @if($canvas->description)
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Beschreibung</h3>
-                    <p class="text-xs text-[var(--ui-muted)] leading-relaxed">{{ $canvas->description }}</p>
-                </div>
-                @endif
-
-                {{-- Completeness --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Fortschritt</h3>
-                    <div class="space-y-2">
-                        {{-- Progress Bar --}}
-                        <div>
-                            <div class="d-flex items-center justify-between text-xs mb-1">
-                                <span class="text-[var(--ui-muted)]">Vollstaendigkeit</span>
-                                <span class="font-semibold text-[var(--ui-secondary)]">{{ $analysisData['completeness_percent'] ?? 0 }}%</span>
-                            </div>
-                            @php
-                                $barColor = match($analysisData['strategy'] ?? 'basic') {
-                                    'completeness' => match($analysisData['health'] ?? 'empty') {
-                                        'good' => 'bg-green-500',
-                                        'partial' => 'bg-yellow-500',
-                                        'minimal' => 'bg-orange-500',
-                                        default => 'bg-[var(--ui-muted)]',
-                                    },
-                                    'traffic_light' => match($analysisData['color'] ?? 'red') {
-                                        'green' => 'bg-green-500',
-                                        'yellow' => 'bg-yellow-500',
-                                        default => 'bg-red-500',
-                                    },
-                                    default => 'bg-blue-500',
-                                };
-                            @endphp
-                            <div class="w-full h-2 rounded-full bg-[var(--ui-muted-5)]">
-                                <div class="h-2 rounded-full transition-all {{ $barColor }}"
-                                     style="width: {{ $analysisData['completeness_percent'] ?? 0 }}%"></div>
-                            </div>
-                        </div>
-
-                        {{-- Stats --}}
-                        <div class="space-y-1.5">
-                            <div class="d-flex items-center justify-between p-2 bg-[var(--ui-muted-5)] rounded-md border border-[var(--ui-border)]/40">
-                                <span class="text-[11px] text-[var(--ui-muted)]">Bloecke</span>
-                                <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $analysisData['filled_blocks'] ?? 0 }}/{{ $analysisData['total_blocks'] ?? 0 }}</span>
-                            </div>
-                            <div class="d-flex items-center justify-between p-2 bg-[var(--ui-muted-5)] rounded-md border border-[var(--ui-border)]/40">
-                                <span class="text-[11px] text-[var(--ui-muted)]">Eintraege</span>
-                                <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $analysisData['total_entries'] ?? 0 }}</span>
-                            </div>
-
-                            @if(($analysisData['strategy'] ?? null) === 'completeness')
-                            <div class="d-flex items-center justify-between p-2 bg-[var(--ui-muted-5)] rounded-md border border-[var(--ui-border)]/40">
-                                <span class="text-[11px] text-[var(--ui-muted)]">Health</span>
-                                <x-ui-badge :variant="match($analysisData['health'] ?? 'empty') { 'good' => 'success', 'partial' => 'warning', default => 'danger' }" size="sm">
-                                    {{ ucfirst($analysisData['health'] ?? 'empty') }}
-                                </x-ui-badge>
-                            </div>
-                            @endif
-
-                            @if(($analysisData['strategy'] ?? null) === 'traffic_light')
-                            <div class="d-flex items-center justify-between p-2 bg-[var(--ui-muted-5)] rounded-md border border-[var(--ui-border)]/40">
-                                <span class="text-[11px] text-[var(--ui-muted)]">Risiken</span>
-                                <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $analysisData['risk_count'] ?? 0 }}</span>
-                            </div>
-                            @if(($analysisData['overdue_milestones'] ?? 0) > 0)
-                            <div class="d-flex items-center justify-between p-2 bg-red-500/10 rounded-md border border-red-500/20">
-                                <span class="text-[11px] text-red-600">Ueberfaellig</span>
-                                <span class="text-xs font-bold text-red-600">{{ $analysisData['overdue_milestones'] }}</span>
-                            </div>
-                            @endif
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Warnings (traffic_light) --}}
-                @if(!empty($analysisData['warnings'] ?? []))
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-2">Warnungen</h3>
-                    <div class="space-y-1.5">
-                        @foreach($analysisData['warnings'] as $warning)
-                        <div class="d-flex items-start gap-2 p-2 rounded-md bg-yellow-500/10 border border-yellow-500/20">
-                            @svg('heroicon-o-exclamation-triangle', 'w-3.5 h-3.5 text-yellow-600 mt-0.5 flex-shrink-0')
-                            <span class="text-[11px] text-[var(--ui-secondary)]">{{ $warning }}</span>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-
-                {{-- Recommendations (completeness) --}}
-                @if(($analysisData['strategy'] ?? null) === 'completeness')
-                    @if(!empty($analysisData['missing_blocks'] ?? []))
-                    <div>
-                        <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Fehlende Bloecke</h3>
-                        <div class="space-y-3">
-                            @foreach($analysisData['missing_blocks'] as $missing)
-                            <div class="p-3 rounded-lg bg-[var(--ui-muted-5)]/50 border border-[var(--ui-border)]/40">
-                                <div class="text-xs font-semibold text-[var(--ui-secondary)] mb-1.5">{{ $missing['label'] }}</div>
-                                <ul class="space-y-1">
-                                    @foreach($missing['guiding_questions'] ?? [] as $question)
-                                    <li class="text-[11px] text-[var(--ui-muted)] d-flex items-start gap-1.5">
-                                        @svg('heroicon-o-question-mark-circle', 'w-3 h-3 mt-0.5 flex-shrink-0')
-                                        {{ $question }}
-                                    </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-
-                    @if(!empty($analysisData['recommendations'] ?? []))
-                    <div>
-                        <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Hinweise</h3>
-                        <div class="space-y-2">
-                            @foreach($analysisData['recommendations'] as $rec)
-                            <div class="d-flex items-start gap-2 p-2 rounded-md bg-yellow-500/10 border border-yellow-500/20">
-                                @svg('heroicon-o-light-bulb', 'w-3.5 h-3.5 text-yellow-600 mt-0.5 flex-shrink-0')
-                                <span class="text-[11px] text-[var(--ui-secondary)]">{{ $rec }}</span>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-                @endif
-            </div>
-        </x-ui-page-sidebar>
-    </x-slot>
-
-    {{-- Right Sidebar: Kommentare --}}
-    <x-slot name="activity">
-        <x-ui-page-sidebar title="Kommentare ({{ $allComments->count() }})" width="w-96" :defaultOpen="false" storeKey="activityOpen" side="right">
+        <x-ui-page-sidebar title="Kommentare ({{ $allComments->count() }})" width="w-80" :defaultOpen="true" storeKey="commentsOpen">
             <div class="p-4 space-y-4">
                 {{-- Block Filter Chips --}}
                 <div class="overflow-x-auto -mx-4 px-4">
@@ -375,12 +327,17 @@
                             </button>
                         </div>
                     @else
-                        <select wire:model="commentBlockId" class="w-full text-[11px] rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-[var(--ui-secondary)] px-2.5 py-1.5 focus:ring-1 focus:ring-[rgb(var(--ui-primary-rgb))]">
-                            <option value="">Canvas-weiter Kommentar</option>
-                            @foreach($canvas->buildingBlocks as $block)
-                                <option value="{{ $block->id }}">{{ $block->label }}</option>
-                            @endforeach
-                        </select>
+                        @php
+                            $blockOptions = $canvas->buildingBlocks->mapWithKeys(fn($b) => [$b->id => $b->label])->toArray();
+                        @endphp
+                        <x-ui-input-select
+                            name="commentBlockId"
+                            :options="$blockOptions"
+                            :nullable="true"
+                            nullLabel="Canvas-weiter Kommentar"
+                            size="sm"
+                            wire:model="commentBlockId"
+                        />
                     @endif
 
                     <div class="flex gap-2">
@@ -476,6 +433,48 @@
                                     Alle Kommentare anzeigen
                                 </button>
                             @endif
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    {{-- Right Sidebar: Aktivitaeten --}}
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Aktivitaeten" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-6">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-[var(--ui-muted)] mb-4">Letzte Aktivitaeten</h3>
+                <div class="space-y-3">
+                    @forelse(($activities ?? []) as $activity)
+                        <div class="p-3 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-muted)] transition-colors">
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-[var(--ui-secondary)] leading-snug">
+                                        {{ $activity['title'] ?? 'Aktivitaet' }}
+                                    </div>
+                                </div>
+                                @if(($activity['type'] ?? null) === 'system')
+                                    <div class="flex-shrink-0">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 text-xs text-[var(--ui-muted)]">
+                                            @svg('heroicon-o-cog', 'w-3 h-3')
+                                            System
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-[var(--ui-muted)]">
+                                @svg('heroicon-o-clock', 'w-3 h-3')
+                                <span>{{ $activity['time'] ?? '' }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-8 text-center">
+                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--ui-muted-5)] mb-3">
+                                @svg('heroicon-o-clock', 'w-6 h-6 text-[var(--ui-muted)]')
+                            </div>
+                            <p class="text-sm text-[var(--ui-muted)]">Noch keine Aktivitaeten</p>
+                            <p class="text-xs text-[var(--ui-muted)] mt-1">Aenderungen werden hier angezeigt</p>
                         </div>
                     @endforelse
                 </div>

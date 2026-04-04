@@ -2,6 +2,7 @@
 
 namespace Platform\Canvas\Livewire\Canvas;
 
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
@@ -92,6 +93,77 @@ class Show extends Component
         $this->filterBlockId = $blockId;
     }
 
+    #[Computed]
+    public function activities()
+    {
+        if (!$this->canvas) {
+            return collect();
+        }
+
+        return $this->canvas->activities()
+            ->with('user')
+            ->limit(10)
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'title' => $this->formatActivityTitle($activity),
+                    'time' => $activity->created_at->diffForHumans(),
+                    'user' => $activity->user?->name ?? 'System',
+                    'type' => $activity->activity_type,
+                    'name' => $activity->name,
+                ];
+            });
+    }
+
+    private function formatActivityTitle($activity): string
+    {
+        $userName = $activity->user?->name ?? 'System';
+        $activityName = $activity->name;
+
+        $translations = [
+            'created' => 'erstellt',
+            'updated' => 'aktualisiert',
+            'deleted' => 'geloescht',
+            'manual' => 'hat eine Nachricht hinzugefuegt',
+        ];
+
+        $translatedName = $translations[$activityName] ?? $activityName;
+
+        if ($activity->message) {
+            return "{$userName}: {$activity->message}";
+        }
+
+        if ($activity->properties && !empty($activity->properties)) {
+            $props = $activity->properties;
+            $changedFields = [];
+
+            if (isset($props['old']) || isset($props['new'])) {
+                $changedFields = array_keys($props['new'] ?? $props['old'] ?? []);
+            } else {
+                $changedFields = array_keys($props);
+            }
+
+            if (!empty($changedFields)) {
+                $fieldNames = array_map(function ($field) {
+                    $map = [
+                        'name' => 'Name',
+                        'description' => 'Beschreibung',
+                        'status' => 'Status',
+                        'is_public' => 'Oeffentlich',
+                        'public_token' => 'Public Token',
+                    ];
+                    return $map[$field] ?? $field;
+                }, $changedFields);
+
+                $fields = implode(', ', $fieldNames);
+                return "{$userName} hat {$fields} {$translatedName}";
+            }
+        }
+
+        return "{$userName} hat das Canvas {$translatedName}";
+    }
+
     protected function loadEntityLinks(): array
     {
         $links = [];
@@ -161,6 +233,7 @@ class Show extends Component
             'comments' => $comments,
             'allComments' => $allComments,
             'entityLinks' => $entityLinks,
+            'activities' => $this->activities,
         ])->layout('platform::layouts.app');
     }
 }
