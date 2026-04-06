@@ -12,10 +12,6 @@
                 </div>
                 <div class="flex items-center gap-2 mt-0.5 text-xs text-[var(--ui-muted)]">
                     <span>{{ $canvas->updated_at?->format('d.m.Y H:i') }}</span>
-                    @if($canvas->description)
-                        <span class="opacity-40">&middot;</span>
-                        <span class="hidden sm:inline truncate max-w-xs">{{ $canvas->description }}</span>
-                    @endif
                 </div>
             </div>
             <button
@@ -65,6 +61,16 @@
         {{-- Canvas Area --}}
         <div class="grow min-w-0 overflow-y-auto" id="canvas-scroll-area">
             <div class="px-4 sm:px-6 py-6 space-y-6">
+                @if($canvas->description)
+                <div class="rounded-xl border border-[var(--ui-border)]/40 bg-[var(--ui-surface)]/60 p-4 sm:p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                        @svg('heroicon-o-document-text', 'w-4 h-4 text-[var(--ui-muted)]')
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--ui-muted)]">Beschreibung</h2>
+                    </div>
+                    <p class="text-sm text-[var(--ui-secondary)] leading-relaxed whitespace-pre-line">{{ $canvas->description }}</p>
+                </div>
+                @endif
+
                 @foreach($blockDefs as $def)
                     @php
                         $blockKey = $def['key'];
