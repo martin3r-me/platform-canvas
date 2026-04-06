@@ -127,6 +127,9 @@
                                                 @if($canvasColor)
                                                 <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $canvasColor }}"></span>
                                                 @endif
+                                                @if($canvas->visibility === 'private')
+                                                @svg('heroicon-o-lock-closed', 'w-3.5 h-3.5 text-yellow-500 flex-shrink-0')
+                                                @endif
                                                 <div>
                                                     <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
                                                     @if($canvas->description)

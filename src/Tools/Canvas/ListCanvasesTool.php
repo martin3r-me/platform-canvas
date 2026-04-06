@@ -38,7 +38,8 @@ class ListCanvasesTool extends AbstractCanvasTool
         $query = Canvas::query()
             ->with('canvasType')
             ->withCount('buildingBlocks', 'snapshots')
-            ->forTeam($teamId);
+            ->forTeam($teamId)
+            ->visibleTo($context->user);
 
         if (isset($arguments['status'])) {
             $query->byStatus($arguments['status']);
@@ -55,7 +56,7 @@ class ListCanvasesTool extends AbstractCanvasTool
 
         $data = collect($result['data'])->map(fn (Canvas $canvas) => [
             'id' => $canvas->id, 'uuid' => $canvas->uuid, 'name' => $canvas->name,
-            'description' => $canvas->description, 'status' => $canvas->status,
+            'description' => $canvas->description, 'status' => $canvas->status, 'visibility' => $canvas->visibility,
             'canvas_type_key' => $canvas->canvasType?->key, 'canvas_type_name' => $canvas->canvasType?->name,
             'building_blocks_count' => $canvas->building_blocks_count, 'snapshots_count' => $canvas->snapshots_count,
             'team_id' => $canvas->team_id,

@@ -29,6 +29,7 @@ class CanvasSidebarService
         $allCanvases = Canvas::query()
             ->with(['canvasType', 'contextColors'])
             ->where('team_id', $teamId)
+            ->visibleTo($user)
             ->orderBy('name')
             ->get();
 

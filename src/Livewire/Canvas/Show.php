@@ -23,8 +23,18 @@ class Show extends Component
     public function mount(Canvas $canvas): void
     {
         abort_unless($canvas->team_id === Auth::user()->currentTeam->id, 403);
+        abort_unless($canvas->isVisibleTo(Auth::user()), 403);
         $canvas->loadMissing('canvasType');
         $this->canvas = $canvas;
+    }
+
+    public function toggleVisibility(): void
+    {
+        $this->canvas->update([
+            'visibility' => $this->canvas->visibility === Canvas::VISIBILITY_PRIVATE
+                ? Canvas::VISIBILITY_TEAM
+                : Canvas::VISIBILITY_PRIVATE,
+        ]);
     }
 
     public function rendered(): void

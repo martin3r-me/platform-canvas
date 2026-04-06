@@ -2,12 +2,14 @@
 
 namespace Platform\Canvas\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Platform\ActivityLog\Traits\LogsActivity;
+use Platform\Core\Models\User;
 use Platform\Core\Traits\HasColors;
 use Platform\Core\Traits\HasTags;
 use Symfony\Component\Uid\UuidV7;
@@ -15,6 +17,10 @@ use Symfony\Component\Uid\UuidV7;
 class Canvas extends Model
 {
     use LogsActivity, SoftDeletes, HasTags, HasColors;
+
+    // Visibility-Konstanten
+    public const VISIBILITY_TEAM = 'team';
+    public const VISIBILITY_PRIVATE = 'private';
 
     // Status-Konstanten (Funnel-Reihenfolge)
     public const STATUS_BACKLOG = 'backlog';
@@ -75,6 +81,7 @@ class Canvas extends Model
         'name',
         'description',
         'status',
+        'visibility',
         'public_token',
         'is_public',
         'contextable_type',
@@ -151,6 +158,20 @@ class Canvas extends Model
     public function scopeOfType($query, string $typeKey)
     {
         return $query->whereHas('canvasType', fn ($q) => $q->where('key', $typeKey));
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where('visibility', self::VISIBILITY_TEAM)
+              ->orWhere('created_by_user_id', $user->id);
+        });
+    }
+
+    public function isVisibleTo(User $user): bool
+    {
+        return $this->visibility === self::VISIBILITY_TEAM
+            || $this->created_by_user_id === $user->id;
     }
 
     public function scopePublic($query)

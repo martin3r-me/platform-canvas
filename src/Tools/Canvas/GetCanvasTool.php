@@ -39,6 +39,7 @@ class GetCanvasTool extends AbstractCanvasTool
             ->with(['buildingBlocks.entries', 'canvasType', 'createdByUser', 'contextable'])
             ->withCount('snapshots')
             ->where('team_id', $teamId)
+            ->visibleTo($context->user)
             ->find($canvasId);
 
         if (!$canvas) {
@@ -46,6 +47,8 @@ class GetCanvasTool extends AbstractCanvasTool
         }
 
         $canvasData = $canvas->toCanvasArray();
+
+        $canvasData['canvas']['visibility'] = $canvas->visibility;
 
         return ToolResult::success([
             'canvas' => $canvasData['canvas'], 'blocks' => $canvasData['blocks'],

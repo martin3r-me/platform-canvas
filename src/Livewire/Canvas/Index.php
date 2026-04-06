@@ -70,6 +70,7 @@ class Index extends Component
         $canvasTypes = CanvasType::availableForTeam($teamId)->get();
 
         $query = Canvas::forTeam($teamId)
+            ->visibleTo($user)
             ->with(['canvasType', 'createdByUser', 'tags', 'contextColors'])
             ->withCount('buildingBlocks');
 
@@ -89,6 +90,7 @@ class Index extends Component
 
         // Typ-Counts fuer Chips (ueber alle, unabhaengig von typeFilter)
         $typeCounts = Canvas::forTeam($teamId)
+            ->visibleTo($user)
             ->with('canvasType')
             ->get()
             ->groupBy(fn ($c) => $c->canvasType?->key ?? '_none')

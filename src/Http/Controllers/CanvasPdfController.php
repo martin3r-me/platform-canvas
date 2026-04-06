@@ -17,6 +17,8 @@ class CanvasPdfController extends Controller
             'Zugriff verweigert'
         );
 
+        abort_unless($canvas->isVisibleTo(Auth::user()), 403, 'Zugriff verweigert');
+
         $canvas->load(['canvasType', 'buildingBlocks.entries', 'createdByUser']);
 
         $canvasData = $canvas->toCanvasArray();

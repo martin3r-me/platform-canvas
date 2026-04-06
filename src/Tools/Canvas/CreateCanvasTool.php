@@ -18,7 +18,7 @@ class CreateCanvasTool extends AbstractCanvasTool
 
     public function getDescription(): string
     {
-        return 'POST /canvas/canvases - Erstellt einen neuen Canvas. ERFORDERLICH: name, type_key (oder canvas_type_id). Optional: description, status, contextable_type, contextable_id.';
+        return 'POST /canvas/canvases - Erstellt einen neuen Canvas. ERFORDERLICH: name, type_key (oder canvas_type_id). Optional: description, status, visibility (team|private), contextable_type, contextable_id.';
     }
 
     public function getSchema(): array
@@ -31,6 +31,7 @@ class CreateCanvasTool extends AbstractCanvasTool
                 'status' => ['type' => 'string', 'enum' => Canvas::STATUSES, 'description' => 'Optional: Status. Default: backlog.'],
                 'type_key' => ['type' => 'string', 'description' => 'Canvas-Typ Key. ERFORDERLICH wenn canvas_type_id nicht angegeben.'],
                 'canvas_type_id' => ['type' => 'integer', 'description' => 'Canvas-Typ ID. ERFORDERLICH wenn type_key nicht angegeben.'],
+                'visibility' => ['type' => 'string', 'enum' => [Canvas::VISIBILITY_TEAM, Canvas::VISIBILITY_PRIVATE], 'description' => 'Optional: Sichtbarkeit. Default: "team". "private" = nur Ersteller sieht es.'],
                 'contextable_type' => ['type' => 'string', 'description' => 'Optional: Polymorphic type.'],
                 'contextable_id' => ['type' => 'integer', 'description' => 'Optional: Polymorphic ID.'],
             ],
@@ -60,9 +61,15 @@ class CreateCanvasTool extends AbstractCanvasTool
             return ToolResult::error('VALIDATION_ERROR', 'type_key oder canvas_type_id ist erforderlich.');
         }
 
+        $visibility = $arguments['visibility'] ?? Canvas::VISIBILITY_TEAM;
+        if (!in_array($visibility, [Canvas::VISIBILITY_TEAM, Canvas::VISIBILITY_PRIVATE])) {
+            return ToolResult::error('VALIDATION_ERROR', 'Ungueltige Sichtbarkeit. Erlaubt: team, private.');
+        }
+
         $canvas = (new CanvasService())->createCanvas([
             'name' => $name, 'description' => $arguments['description'] ?? null,
-            'status' => $arguments['status'] ?? Canvas::STATUS_BACKLOG, 'canvas_type_id' => $canvasTypeId,
+            'status' => $arguments['status'] ?? Canvas::STATUS_BACKLOG, 'visibility' => $visibility,
+            'canvas_type_id' => $canvasTypeId,
             'contextable_type' => $arguments['contextable_type'] ?? null, 'contextable_id' => $arguments['contextable_id'] ?? null,
             'team_id' => $teamId, 'created_by_user_id' => $context->user->id,
         ]);
@@ -71,6 +78,7 @@ class CreateCanvasTool extends AbstractCanvasTool
 
         return ToolResult::success([
             'id' => $canvas->id, 'uuid' => $canvas->uuid, 'name' => $canvas->name, 'status' => $canvas->status,
+            'visibility' => $canvas->visibility,
             'canvas_type_key' => $canvas->canvasType?->key, 'canvas_type_name' => $canvas->canvasType?->name,
             'building_blocks_count' => $canvas->buildingBlocks->count(), 'team_id' => $canvas->team_id,
             'message' => "Canvas erstellt mit {$canvas->buildingBlocks->count()} Building Blocks.",

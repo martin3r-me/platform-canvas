@@ -16,7 +16,7 @@ class UpdateCanvasTool extends AbstractCanvasTool
 
     public function getDescription(): string
     {
-        return 'PUT /canvas/canvases/{id} - Aktualisiert einen Canvas. Parameter: canvas_id (required). Optional: name, description, status.';
+        return 'PUT /canvas/canvases/{id} - Aktualisiert einen Canvas. Parameter: canvas_id (required). Optional: name, description, status, visibility (team|private).';
     }
 
     public function getSchema(): array
@@ -28,6 +28,7 @@ class UpdateCanvasTool extends AbstractCanvasTool
                 'name' => ['type' => 'string', 'description' => 'Optional: Neuer Name.'],
                 'description' => ['type' => 'string', 'description' => 'Optional: Neue Beschreibung.'],
                 'status' => ['type' => 'string', 'enum' => Canvas::STATUSES, 'description' => 'Optional: Neuer Status.'],
+                'visibility' => ['type' => 'string', 'enum' => [Canvas::VISIBILITY_TEAM, Canvas::VISIBILITY_PRIVATE], 'description' => 'Optional: Sichtbarkeit. "team" = alle Team-Mitglieder, "private" = nur Ersteller.'],
             ],
             'required' => ['canvas_id'],
         ]);
@@ -45,6 +46,10 @@ class UpdateCanvasTool extends AbstractCanvasTool
             return ToolResult::error('ACCESS_DENIED', 'Du hast keinen Zugriff auf diesen Canvas.');
         }
 
+        if (!$canvas->isVisibleTo($context->user)) {
+            return ToolResult::error('ACCESS_DENIED', 'Du hast keinen Zugriff auf diesen Canvas.');
+        }
+
         foreach (['name', 'description'] as $field) {
             if (array_key_exists($field, $arguments)) {
                 $canvas->{$field} = $arguments[$field] === '' ? null : $arguments[$field];
@@ -59,11 +64,20 @@ class UpdateCanvasTool extends AbstractCanvasTool
             $canvas->status = $newStatus;
         }
 
+        if (array_key_exists('visibility', $arguments)) {
+            $newVisibility = $arguments['visibility'];
+            if (!in_array($newVisibility, [Canvas::VISIBILITY_TEAM, Canvas::VISIBILITY_PRIVATE])) {
+                return ToolResult::error('VALIDATION_ERROR', 'Ungueltige Sichtbarkeit. Erlaubt: team, private.');
+            }
+            $canvas->visibility = $newVisibility;
+        }
+
         $canvas->save();
         $canvas->load('canvasType');
 
         return ToolResult::success([
             'id' => $canvas->id, 'uuid' => $canvas->uuid, 'name' => $canvas->name, 'status' => $canvas->status,
+            'visibility' => $canvas->visibility,
             'canvas_type_key' => $canvas->canvasType?->key, 'canvas_type_name' => $canvas->canvasType?->name,
             'team_id' => $canvas->team_id, 'message' => 'Canvas erfolgreich aktualisiert.',
         ]);

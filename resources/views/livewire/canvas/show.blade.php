@@ -38,6 +38,15 @@
             </x-slot>
 
             {{-- Rechts: Actions --}}
+            <x-ui-button
+                variant="{{ $canvas->visibility === 'private' ? 'warning' : 'ghost' }}"
+                size="sm"
+                wire:click="toggleVisibility"
+            >
+                @svg($canvas->visibility === 'private' ? 'heroicon-o-lock-closed' : 'heroicon-o-user-group', 'w-4 h-4')
+                <span>{{ $canvas->visibility === 'private' ? 'Privat' : 'Team' }}</span>
+            </x-ui-button>
+
             <a href="{{ route('canvas.canvases.pdf', $canvas) }}" target="_blank">
                 <x-ui-button variant="ghost" size="sm">
                     @svg('heroicon-o-arrow-down-tray', 'w-4 h-4')
