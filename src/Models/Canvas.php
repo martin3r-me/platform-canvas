@@ -22,54 +22,42 @@ class Canvas extends Model
     public const VISIBILITY_TEAM = 'team';
     public const VISIBILITY_PRIVATE = 'private';
 
-    // Status-Konstanten (Funnel-Reihenfolge)
-    public const STATUS_BACKLOG = 'backlog';
-    public const STATUS_IN_PROGRESS = 'in_progress';
-    public const STATUS_REVIEW = 'review';
-    public const STATUS_VALIDATED = 'validated';
-    public const STATUS_ARCHIVED = 'archived';
+    // Status-Konstanten
+    public const STATUS_OPEN = 'open';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_DISCARDED = 'discarded';
 
     public const STATUSES = [
-        self::STATUS_BACKLOG,
-        self::STATUS_IN_PROGRESS,
-        self::STATUS_REVIEW,
-        self::STATUS_VALIDATED,
-        self::STATUS_ARCHIVED,
+        self::STATUS_OPEN,
+        self::STATUS_COMPLETED,
+        self::STATUS_DISCARDED,
     ];
 
     public const ACTIVE_STATUSES = [
-        self::STATUS_BACKLOG,
-        self::STATUS_IN_PROGRESS,
-        self::STATUS_REVIEW,
+        self::STATUS_OPEN,
     ];
 
     public const DONE_STATUSES = [
-        self::STATUS_VALIDATED,
-        self::STATUS_ARCHIVED,
+        self::STATUS_COMPLETED,
+        self::STATUS_DISCARDED,
     ];
 
     public const STATUS_LABELS = [
-        self::STATUS_BACKLOG => 'Backlog',
-        self::STATUS_IN_PROGRESS => 'In Arbeit',
-        self::STATUS_REVIEW => 'Review',
-        self::STATUS_VALIDATED => 'Validiert',
-        self::STATUS_ARCHIVED => 'Archiviert',
+        self::STATUS_OPEN => 'Offen',
+        self::STATUS_COMPLETED => 'Abgeschlossen',
+        self::STATUS_DISCARDED => 'Verworfen',
     ];
 
     public const STATUS_ICONS = [
-        self::STATUS_BACKLOG => 'heroicon-o-inbox-stack',
-        self::STATUS_IN_PROGRESS => 'heroicon-o-pencil-square',
-        self::STATUS_REVIEW => 'heroicon-o-eye',
-        self::STATUS_VALIDATED => 'heroicon-o-check-badge',
-        self::STATUS_ARCHIVED => 'heroicon-o-archive-box',
+        self::STATUS_OPEN => 'heroicon-o-pencil-square',
+        self::STATUS_COMPLETED => 'heroicon-o-check-circle',
+        self::STATUS_DISCARDED => 'heroicon-o-x-circle',
     ];
 
     public const STATUS_VARIANTS = [
-        self::STATUS_BACKLOG => 'secondary',
-        self::STATUS_IN_PROGRESS => 'warning',
-        self::STATUS_REVIEW => 'info',
-        self::STATUS_VALIDATED => 'success',
-        self::STATUS_ARCHIVED => 'secondary',
+        self::STATUS_OPEN => 'primary',
+        self::STATUS_COMPLETED => 'success',
+        self::STATUS_DISCARDED => 'secondary',
     ];
 
     protected $table = 'canvases';
@@ -197,35 +185,22 @@ class Canvas extends Model
         return route('canvas.public.show', $this->public_token);
     }
 
-    // Status Transitions
+    // Status helpers
 
-    public const TRANSITIONS = [
-        self::STATUS_BACKLOG => [self::STATUS_IN_PROGRESS, self::STATUS_ARCHIVED],
-        self::STATUS_IN_PROGRESS => [self::STATUS_REVIEW, self::STATUS_BACKLOG, self::STATUS_ARCHIVED],
-        self::STATUS_REVIEW => [self::STATUS_VALIDATED, self::STATUS_IN_PROGRESS, self::STATUS_ARCHIVED],
-        self::STATUS_VALIDATED => [self::STATUS_ARCHIVED],
-        self::STATUS_ARCHIVED => [],
-    ];
-
-    public function allowedTransitions(): array
+    public function close(?string $reason = 'completed'): void
     {
-        return self::TRANSITIONS[$this->status] ?? [];
-    }
-
-    public function canTransitionTo(string $status): bool
-    {
-        return in_array($status, $this->allowedTransitions());
-    }
-
-    public function transitionTo(string $status): void
-    {
-        if (! $this->canTransitionTo($status)) {
-            throw new \InvalidArgumentException(
-                "Uebergang von '{$this->status}' nach '{$status}' ist nicht erlaubt."
-            );
-        }
-
+        $status = $reason === 'discarded' ? self::STATUS_DISCARDED : self::STATUS_COMPLETED;
         $this->update(['status' => $status]);
+    }
+
+    public function reopen(): void
+    {
+        $this->update(['status' => self::STATUS_OPEN]);
+    }
+
+    public function isClosed(): bool
+    {
+        return in_array($this->status, self::DONE_STATUSES);
     }
 
     /**

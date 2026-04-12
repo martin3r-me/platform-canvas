@@ -230,7 +230,7 @@ class CanvasSidebarService
         $canvas->name = 'Neues Canvas';
         $canvas->team_id = $teamId;
         $canvas->created_by_user_id = $user->id;
-        $canvas->status = Canvas::STATUS_BACKLOG;
+        $canvas->status = Canvas::STATUS_OPEN;
         if ($canvasType) {
             $canvas->canvas_type_id = $canvasType->id;
         }

@@ -28,7 +28,7 @@ class CreateCanvasTool extends AbstractCanvasTool
                 'team_id' => ['type' => 'integer', 'description' => 'Optional: Team-ID.'],
                 'name' => ['type' => 'string', 'description' => 'Name des Canvas (ERFORDERLICH).'],
                 'description' => ['type' => 'string', 'description' => 'Optional: Beschreibung.'],
-                'status' => ['type' => 'string', 'enum' => Canvas::STATUSES, 'description' => 'Optional: Status. Default: backlog.'],
+                'status' => ['type' => 'string', 'enum' => Canvas::STATUSES, 'description' => 'Optional: Status. Default: open.'],
                 'type_key' => ['type' => 'string', 'description' => 'Canvas-Typ Key. ERFORDERLICH wenn canvas_type_id nicht angegeben.'],
                 'canvas_type_id' => ['type' => 'integer', 'description' => 'Canvas-Typ ID. ERFORDERLICH wenn type_key nicht angegeben.'],
                 'visibility' => ['type' => 'string', 'enum' => [Canvas::VISIBILITY_TEAM, Canvas::VISIBILITY_PRIVATE], 'description' => 'Optional: Sichtbarkeit. Default: "team". "private" = nur Ersteller sieht es.'],
@@ -68,7 +68,7 @@ class CreateCanvasTool extends AbstractCanvasTool
 
         $canvas = (new CanvasService())->createCanvas([
             'name' => $name, 'description' => $arguments['description'] ?? null,
-            'status' => $arguments['status'] ?? Canvas::STATUS_BACKLOG, 'visibility' => $visibility,
+            'status' => $arguments['status'] ?? Canvas::STATUS_OPEN, 'visibility' => $visibility,
             'canvas_type_id' => $canvasTypeId,
             'contextable_type' => $arguments['contextable_type'] ?? null, 'contextable_id' => $arguments['contextable_id'] ?? null,
             'team_id' => $teamId, 'created_by_user_id' => $context->user->id,

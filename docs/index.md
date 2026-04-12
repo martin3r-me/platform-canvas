@@ -50,17 +50,17 @@ Das System analysiert deinen Fortschritt, zeigt dir fehlende Bereiche und gibt E
 
 ## Status-Workflow
 
-Jedes Canvas durchläuft einen klaren Lebenszyklus:
+Jedes Canvas hat einen einfachen Status:
 
 | Status | Bedeutung | Icon |
 |--------|-----------|------|
-| 📥 **Backlog** | Idee oder Entwurf, noch nicht begonnen | Eingang |
-| ✏️ **In Bearbeitung** | Wird aktiv befüllt und durchdacht | Stift |
-| 👁️ **Review** | Zur Überprüfung durch andere | Auge |
-| ✅ **Validiert** | Geprüft und freigegeben | Häkchen |
-| 📦 **Archiviert** | Abgeschlossen, historisch aufbewahrt | Archiv |
+| ✏️ **Offen** | Canvas wird bearbeitet | Stift |
+| ✅ **Abgeschlossen** | Umgesetzt / Zweck erfüllt | Häkchen |
+| ❌ **Verworfen** | Bewusst nicht weiterverfolgt | Kreuz |
 
-Den Status änderst du direkt in der Listenansicht oder auf dem Canvas selbst.
+- **Aktiv-Tab** zeigt alle offenen Canvases
+- **Erledigt-Tab** zeigt abgeschlossene und verworfene Canvases
+- Jeder Status-Wechsel ist erlaubt — kein fester Workflow
 
 ---
 

@@ -27,12 +27,7 @@ class Index extends Component
         $teamId = $user->currentTeam?->id;
 
         $canvas = Canvas::forTeam($teamId)->findOrFail($canvasId);
-
-        if (! $canvas->canTransitionTo($status)) {
-            return;
-        }
-
-        $canvas->transitionTo($status);
+        $canvas->update(['status' => $status]);
     }
 
     public function setView(string $view): void
@@ -97,27 +92,34 @@ class Index extends Component
             ->map->count();
         $totalCount = $typeCounts->sum();
 
-        // Nur die Statuses der aktiven Ansicht
-        $visibleStatuses = $this->view === 'active' ? Canvas::ACTIVE_STATUSES : Canvas::DONE_STATUSES;
+        if ($this->view === 'active') {
+            // Aktiv-Tab: flat list sorted by updated_at (already sorted)
+            $activeCanvases = $allCanvases->whereIn('status', Canvas::ACTIVE_STATUSES)->values();
+            $grouped = collect();
 
-        // Nach Status gruppieren (Funnel-Reihenfolge)
-        $grouped = collect();
-        foreach ($visibleStatuses as $status) {
-            $grouped[$status] = $allCanvases->where('status', $status)->values();
-        }
+            $stats = [
+                'total' => $activeCanvases->count(),
+            ];
+        } else {
+            // Erledigt-Tab: grouped by completed/discarded
+            $grouped = collect();
+            foreach (Canvas::DONE_STATUSES as $status) {
+                $grouped[$status] = $allCanvases->where('status', $status)->values();
+            }
+            $activeCanvases = collect();
 
-        // Stats nur fuer sichtbare Statuses
-        $stats = [];
-        foreach ($visibleStatuses as $status) {
-            $stats[$status] = $grouped[$status]->count();
+            $stats = [];
+            foreach (Canvas::DONE_STATUSES as $status) {
+                $stats[$status] = $grouped[$status]->count();
+            }
+            $stats['total'] = collect($stats)->sum();
         }
-        $stats['total'] = collect($stats)->sum();
 
         return view('canvas::livewire.canvas.index', [
             'grouped' => $grouped,
+            'activeCanvases' => $activeCanvases ?? collect(),
             'canvasTypes' => $canvasTypes,
             'stats' => $stats,
-            'visibleStatuses' => $visibleStatuses,
             'activeCount' => $activeCount,
             'doneCount' => $doneCount,
             'typeCounts' => $typeCounts,
