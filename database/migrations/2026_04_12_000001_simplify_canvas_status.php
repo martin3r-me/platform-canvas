@@ -9,26 +9,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Data migration: map old statuses to new ones
+        // 1. Erst ENUM erweitern, damit neue Werte geschrieben werden koennen
+        DB::statement("ALTER TABLE canvases MODIFY COLUMN status ENUM('backlog','in_progress','review','validated','archived','open','completed','discarded') NOT NULL DEFAULT 'open'");
+
+        // 2. Data migration: map old statuses to new ones
         DB::table('canvases')->whereIn('status', ['backlog', 'in_progress', 'review'])->update(['status' => 'open']);
         DB::table('canvases')->where('status', 'validated')->update(['status' => 'completed']);
         DB::table('canvases')->where('status', 'archived')->update(['status' => 'discarded']);
 
-        // 2. Change enum column
-        Schema::table('canvases', function (Blueprint $table) {
-            $table->string('status', 20)->default('open')->change();
-        });
+        // 3. ENUM auf nur noch die neuen Werte einschraenken
+        DB::statement("ALTER TABLE canvases MODIFY COLUMN status ENUM('open','completed','discarded') NOT NULL DEFAULT 'open'");
     }
 
     public function down(): void
     {
-        // Revert: map new statuses back to old ones
+        // 1. ENUM erweitern
+        DB::statement("ALTER TABLE canvases MODIFY COLUMN status ENUM('backlog','in_progress','review','validated','archived','open','completed','discarded') NOT NULL DEFAULT 'backlog'");
+
+        // 2. Revert data
         DB::table('canvases')->where('status', 'open')->update(['status' => 'backlog']);
         DB::table('canvases')->where('status', 'completed')->update(['status' => 'validated']);
         DB::table('canvases')->where('status', 'discarded')->update(['status' => 'archived']);
 
-        Schema::table('canvases', function (Blueprint $table) {
-            $table->string('status', 20)->default('backlog')->change();
-        });
+        // 3. ENUM einschraenken
+        DB::statement("ALTER TABLE canvases MODIFY COLUMN status ENUM('backlog','in_progress','review','validated','archived') NOT NULL DEFAULT 'backlog'");
     }
 };
