@@ -12,9 +12,10 @@ use Platform\ActivityLog\Traits\LogsActivity;
 use Platform\Core\Models\User;
 use Platform\Core\Traits\HasColors;
 use Platform\Core\Traits\HasTags;
+use Platform\Core\Contracts\AgendaRenderable;
 use Symfony\Component\Uid\UuidV7;
 
-class Canvas extends Model
+class Canvas extends Model implements AgendaRenderable
 {
     use LogsActivity, SoftDeletes, HasTags, HasColors;
 
@@ -259,6 +260,26 @@ class Canvas extends Model
                 'updated_at' => $this->updated_at?->toISOString(),
             ],
             'blocks' => $blocks,
+        ];
+    }
+
+    // ── AgendaRenderable ──────────────────────────────────────
+
+    public function toAgendaItem(): array
+    {
+        return [
+            'title' => $this->name,
+            'description' => $this->description ? \Illuminate\Support\Str::limit($this->description, 120) : null,
+            'icon' => '🎨',
+            'color' => $this->color,
+            'status' => $this->status,
+            'status_color' => match ($this->status) {
+                'completed' => 'green',
+                'discarded' => 'gray',
+                default => 'blue',
+            },
+            'url' => route('canvas.canvases.show', $this),
+            'meta' => ['canvas_type' => $this->canvasType?->name],
         ];
     }
 }
