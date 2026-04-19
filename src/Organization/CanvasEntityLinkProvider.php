@@ -3,6 +3,7 @@
 namespace Platform\Canvas\Organization;
 
 use Illuminate\Database\Eloquent\Builder;
+use Platform\Canvas\Models\Canvas;
 use Platform\Organization\Contracts\EntityLinkProvider;
 
 class CanvasEntityLinkProvider implements EntityLinkProvider
@@ -54,6 +55,55 @@ class CanvasEntityLinkProvider implements EntityLinkProvider
 
     public function metrics(string $morphAlias, array $linksByEntity): array
     {
-        return [];
+        if ($morphAlias !== 'canvas') {
+            return [];
+        }
+
+        $allIds = [];
+        foreach ($linksByEntity as $ids) {
+            $allIds = array_merge($allIds, $ids);
+        }
+        $allIds = array_values(array_unique($allIds));
+
+        if (empty($allIds)) {
+            return [];
+        }
+
+        $canvases = Canvas::whereIn('id', $allIds)
+            ->withCount('buildingBlocks')
+            ->select('id', 'status')
+            ->get()
+            ->keyBy('id');
+
+        $result = [];
+        foreach ($linksByEntity as $entityId => $ids) {
+            $total = 0;
+            $completed = 0;
+            $open = 0;
+            $blocksTotal = 0;
+
+            foreach ($ids as $id) {
+                $canvas = $canvases[$id] ?? null;
+                if (!$canvas) {
+                    continue;
+                }
+                $total++;
+                if (in_array($canvas->status, Canvas::DONE_STATUSES)) {
+                    $completed++;
+                } elseif ($canvas->status === Canvas::STATUS_OPEN) {
+                    $open++;
+                }
+                $blocksTotal += (int) ($canvas->building_blocks_count ?? 0);
+            }
+
+            $result[$entityId] = [
+                'canvas_total' => $total,
+                'canvas_completed' => $completed,
+                'canvas_open' => $open,
+                'canvas_blocks_total' => $blocksTotal,
+            ];
+        }
+
+        return $result;
     }
 }
