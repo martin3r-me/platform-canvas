@@ -332,7 +332,11 @@ class Show extends Component
             'type' => $rawLayout['type'] ?? 'grid',
             'columns' => (int) ($rawLayout['columns'] ?? 2),
             'rows' => (int) ($rawLayout['rows'] ?? 2),
-            'areas' => is_array($areasRaw) ? implode(' / ', $areasRaw) : (string) $areasRaw,
+            'areas' => is_string($areasRaw)
+                ? $areasRaw
+                : (is_array($areasRaw)
+                    ? implode(' / ', array_map(fn ($v) => is_array($v) ? implode(' ', $v) : (string) $v, $areasRaw))
+                    : ''),
             'area_map' => is_array($rawLayout['area_map'] ?? null) ? $rawLayout['area_map'] : [],
         ];
         $blockDefs = $this->canvas->canvasType?->block_definitions ?? [];
