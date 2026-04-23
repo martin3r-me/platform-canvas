@@ -6,6 +6,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
+use Platform\Canvas\Models\WorkshopNote;
 use Platform\Canvas\Services\AnalysisService;
 use Platform\Canvas\Services\CommentService;
 use Platform\Organization\Models\OrganizationContext;
@@ -112,95 +113,87 @@ class Show extends Component
         $this->viewMode = $this->viewMode === 'list' ? 'workshop' : 'list';
     }
 
-    // ─── Workshop CRUD ──────────────────────────────────────
+    // ─── Workshop CRUD (WorkshopNote-based) ────────────────
 
-    public function updateNotePosition(int $entryId, array $pos): void
+    public function addWorkshopNote(): void
     {
-        $entry = \Platform\Canvas\Models\Entry::find($entryId);
-        abort_unless($entry && $entry->buildingBlock && $entry->buildingBlock->canvas_id === $this->canvas->id, 403);
+        $existingCount = $this->canvas->workshopNotes()->count();
 
-        $metadata = $entry->metadata ?? [];
-        $metadata['x'] = $pos['x'] ?? $metadata['x'] ?? 0;
-        $metadata['y'] = $pos['y'] ?? $metadata['y'] ?? 0;
-        if (isset($pos['width'])) $metadata['width'] = $pos['width'];
-        if (isset($pos['height'])) $metadata['height'] = $pos['height'];
-
-        $entry->update(['metadata' => $metadata]);
-    }
-
-    public function moveNoteToBlock(int $entryId, int $newBlockId): void
-    {
-        $entry = \Platform\Canvas\Models\Entry::find($entryId);
-        abort_unless($entry && $entry->buildingBlock && $entry->buildingBlock->canvas_id === $this->canvas->id, 403);
-
-        $newBlock = \Platform\Canvas\Models\BuildingBlock::find($newBlockId);
-        abort_unless($newBlock && $newBlock->canvas_id === $this->canvas->id, 403);
-
-        // Reset position when moving to a new block
-        $metadata = $entry->metadata ?? [];
-        $metadata['x'] = 20;
-        $metadata['y'] = 20;
-
-        $entry->update([
-            'building_block_id' => $newBlockId,
-            'metadata' => $metadata,
-        ]);
-    }
-
-    public function addWorkshopNote(string $blockKey, ?array $data = []): void
-    {
-        $block = $this->canvas->buildingBlocks()->where('block_key', $blockKey)->first();
-        abort_unless($block, 404);
-
-        $existingCount = $block->entries()->count();
-
-        \Platform\Canvas\Models\Entry::create([
-            'building_block_id' => $block->id,
+        WorkshopNote::create([
+            'canvas_id' => $this->canvas->id,
             'title' => '',
             'content' => '',
-            'entry_type' => 'text',
-            'position' => $existingCount + 1,
-            'metadata' => [
-                'x' => 10 + ($existingCount % 3) * 215,
-                'y' => 10 + intdiv($existingCount, 3) * 165,
-                'width' => 200,
-                'height' => 150,
-                'color' => 'yellow',
-            ],
+            'color' => 'yellow',
+            'position_x' => 100 + ($existingCount % 4) * 230,
+            'position_y' => 100 + intdiv($existingCount, 4) * 180,
+            'width' => 200,
+            'height' => 150,
             'created_by_user_id' => Auth::id(),
         ]);
     }
 
-    public function deleteWorkshopNote(int $entryId): void
+    public function updateNotePosition(int $noteId, array $pos): void
     {
-        $entry = \Platform\Canvas\Models\Entry::find($entryId);
-        abort_unless($entry && $entry->buildingBlock && $entry->buildingBlock->canvas_id === $this->canvas->id, 403);
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
 
-        $entry->delete();
+        $note->update([
+            'position_x' => $pos['x'] ?? $note->position_x,
+            'position_y' => $pos['y'] ?? $note->position_y,
+            'width' => isset($pos['width']) ? (int) $pos['width'] : $note->width,
+            'height' => isset($pos['height']) ? (int) $pos['height'] : $note->height,
+        ]);
     }
 
-    public function updateNoteText(int $entryId, string $title, string $content): void
+    public function updateNoteText(int $noteId, string $title, string $content): void
     {
-        $entry = \Platform\Canvas\Models\Entry::find($entryId);
-        abort_unless($entry && $entry->buildingBlock && $entry->buildingBlock->canvas_id === $this->canvas->id, 403);
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
 
-        $entry->update([
+        $note->update([
             'title' => $title,
             'content' => $content,
         ]);
     }
 
-    public function updateNoteColor(int $entryId, string $color): void
+    public function updateNoteColor(int $noteId, string $color): void
     {
-        $entry = \Platform\Canvas\Models\Entry::find($entryId);
-        abort_unless($entry && $entry->buildingBlock && $entry->buildingBlock->canvas_id === $this->canvas->id, 403);
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
 
-        $allowedColors = ['yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'teal', 'red'];
-        if (!in_array($color, $allowedColors)) return;
+        if (!in_array($color, WorkshopNote::allowedColors())) return;
 
-        $metadata = $entry->metadata ?? [];
-        $metadata['color'] = $color;
-        $entry->update(['metadata' => $metadata]);
+        $note->update(['color' => $color]);
+    }
+
+    public function deleteWorkshopNote(int $noteId): void
+    {
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
+
+        $note->delete();
+    }
+
+    public function adoptNote(int $noteId, int $blockId): void
+    {
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
+
+        $block = \Platform\Canvas\Models\BuildingBlock::find($blockId);
+        abort_unless($block && $block->canvas_id === $this->canvas->id, 403);
+
+        $existingCount = $block->entries()->count();
+
+        \Platform\Canvas\Models\Entry::create([
+            'building_block_id' => $block->id,
+            'title' => $note->title,
+            'content' => $note->content ?? '',
+            'entry_type' => 'text',
+            'position' => $existingCount + 1,
+            'created_by_user_id' => $note->created_by_user_id,
+        ]);
+
+        $note->delete();
     }
 
     #[Computed]
@@ -348,21 +341,24 @@ class Show extends Component
         // Entity-Links laden
         $entityLinks = $this->loadEntityLinks();
 
-        // Workshop: prepare entries grouped by block for JS
-        $workshopEntries = [];
+        // Workshop: load notes for the notes layer
+        $workshopNotes = [];
         if ($this->viewMode === 'workshop') {
-            foreach ($this->canvas->buildingBlocks as $block) {
-                foreach ($block->entries as $entry) {
-                    $workshopEntries[] = [
-                        'id' => $entry->id,
-                        'block_id' => $block->id,
-                        'block_key' => $block->block_key,
-                        'title' => $entry->title ?? '',
-                        'content' => $entry->content ?? '',
-                        'metadata' => $entry->metadata ?? [],
-                    ];
-                }
-            }
+            $workshopNotes = $this->canvas->workshopNotes()
+                ->orderBy('created_at')
+                ->get()
+                ->map(fn (WorkshopNote $n) => [
+                    'id' => $n->id,
+                    'title' => $n->title,
+                    'content' => $n->content ?? '',
+                    'color' => $n->color,
+                    'x' => $n->position_x,
+                    'y' => $n->position_y,
+                    'width' => $n->width,
+                    'height' => $n->height,
+                ])
+                ->values()
+                ->toArray();
         }
 
         return view('canvas::livewire.canvas.show', [
@@ -374,7 +370,7 @@ class Show extends Component
             'allComments' => $allComments,
             'entityLinks' => $entityLinks,
             'activities' => $this->activities,
-            'workshopEntries' => $workshopEntries,
+            'workshopNotes' => $workshopNotes,
         ])->layout('platform::layouts.app');
     }
 }

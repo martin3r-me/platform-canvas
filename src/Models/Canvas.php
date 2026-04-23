@@ -132,6 +132,11 @@ class Canvas extends Model implements AgendaRenderable
         return $this->hasMany(CanvasComment::class, 'canvas_id');
     }
 
+    public function workshopNotes(): HasMany
+    {
+        return $this->hasMany(WorkshopNote::class, 'canvas_id');
+    }
+
     // Scopes
 
     public function scopeForTeam($query, int $teamId)

@@ -321,7 +321,7 @@
         </script>
 
         @else
-        {{-- ═══ WORKSHOP VIEW ═══ --}}
+        {{-- ═══ WORKSHOP VIEW (Two-Layer) ═══ --}}
         @php
             $gridCols = $layout['columns'];
             $gridRows = $layout['rows'];
@@ -330,9 +330,9 @@
         @endphp
 
         <div x-data="workshopBoard({
-                entries: {{ Js::from($workshopEntries) }},
-                gridLayout: {{ Js::from($layout) }},
-                blockDefs: {{ Js::from($blockDefs) }}
+                notes: {{ Js::from($workshopNotes) }},
+                canvasBlocks: {{ Js::from(collect($blockDefs)->map(fn($d) => ['key' => $d['key'], 'label' => $d['label'] ?? $d['key'], 'id' => $blocksById[$d['key']]?->id ?? null])->values()) }},
+                gridLayout: {{ Js::from($layout) }}
              })"
              class="relative h-[calc(100vh-220px)] overflow-hidden bg-gray-50"
              wire:ignore.self
@@ -358,9 +358,18 @@
                 </button>
             </div>
 
+            {{-- FAB: Add Note --}}
+            <button class="workshop-fab" x-on:click="addNote()" title="Neue Notiz">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                <span>Notiz</span>
+            </button>
+
             {{-- Board (panzoom target) --}}
             <div x-ref="board" class="workshop-board">
-                <div class="workshop-grid" style="
+                {{-- LAYER 1: Canvas Grid Background (read-only) --}}
+                <div class="workshop-canvas-background" style="
                     display: grid;
                     grid-template-columns: repeat({{ $gridCols }}, 1fr);
                     grid-template-rows: repeat({{ $gridRows }}, 1fr);
@@ -373,13 +382,97 @@
                     min-height: {{ max(900, $gridRows * 300) }}px;
                 ">
                     @foreach($blockDefs as $def)
-                        @include('canvas::livewire.canvas._workshop-block', [
+                        @include('canvas::livewire.canvas._workshop-grid-block', [
                             'blockKey' => $def['key'],
                             'blockDef' => $def,
                             'block' => $blocksById[$def['key']] ?? null,
-                            'entries' => $workshopEntries,
+                            'canvasData' => $canvasData,
                             'layout' => $layout,
                         ])
+                    @endforeach
+                </div>
+
+                {{-- LAYER 2: Workshop Notes (free-floating, draggable) --}}
+                <div class="workshop-notes-layer">
+                    @foreach($workshopNotes as $note)
+                        @php
+                            $color = $note['color'] ?? 'yellow';
+                            $x = $note['x'] ?? 0;
+                            $y = $note['y'] ?? 0;
+                            $w = $note['width'] ?? 200;
+                            $h = $note['height'] ?? 150;
+                        @endphp
+                        <div class="workshop-note workshop-note-{{ $color }}"
+                             data-note-id="{{ $note['id'] }}"
+                             data-x="{{ $x }}"
+                             data-y="{{ $y }}"
+                             style="width: {{ $w }}px; height: {{ $h }}px; transform: translate({{ $x }}px, {{ $y }}px);">
+
+                            {{-- Drag Handle --}}
+                            <div class="drag-handle">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="drag-dots">
+                                        <span></span><span></span><span></span>
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                    {{-- Color dot --}}
+                                    <div class="relative" x-on:click.stop>
+                                        <div class="color-dot"
+                                             style="background: {{ match($color) {
+                                                 'yellow' => '#fbbf24',
+                                                 'blue' => '#60a5fa',
+                                                 'green' => '#4ade80',
+                                                 'pink' => '#f472b6',
+                                                 'purple' => '#a78bfa',
+                                                 'orange' => '#fb923c',
+                                                 'teal' => '#2dd4bf',
+                                                 'red' => '#f87171',
+                                                 default => '#fbbf24',
+                                             } }}"
+                                             x-on:click="toggleColorPicker({{ $note['id'] }})"
+                                        ></div>
+                                        {{-- Color Picker Dropdown --}}
+                                        <div x-show="colorPickerOpen === {{ $note['id'] }}"
+                                             x-on:click.outside="colorPickerOpen = null"
+                                             x-transition
+                                             class="absolute top-full left-0 mt-1 flex gap-1 p-1.5 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                            <template x-for="c in colors" :key="c">
+                                                <div class="color-dot"
+                                                     :class="{ 'active': '{{ $color }}' === c }"
+                                                     :style="'background:' + ({yellow:'#fbbf24',blue:'#60a5fa',green:'#4ade80',pink:'#f472b6',purple:'#a78bfa',orange:'#fb923c',teal:'#2dd4bf',red:'#f87171'}[c])"
+                                                     x-on:click="changeColor({{ $note['id'] }}, c)"
+                                                ></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Delete --}}
+                                <button class="note-delete"
+                                        x-on:click.stop="if(confirm('Notiz loeschen?')) deleteNote({{ $note['id'] }})"
+                                        title="Loeschen">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Content --}}
+                            <div class="note-body">
+                                <input type="text"
+                                       value="{{ $note['title'] }}"
+                                       placeholder="Titel..."
+                                       x-on:blur="updateNoteText({{ $note['id'] }}, $event.target.value, $event.target.closest('.note-body').querySelector('textarea').value)"
+                                       x-on:keydown.enter="$event.target.blur()"
+                                />
+                                <textarea
+                                    placeholder="Notiz..."
+                                    x-on:blur="updateNoteText({{ $note['id'] }}, $event.target.closest('.note-body').querySelector('input').value, $event.target.value)"
+                                >{{ $note['content'] }}</textarea>
+                            </div>
+
+                            {{-- Resize Handle --}}
+                            <div class="resize-handle"></div>
+                        </div>
                     @endforeach
                 </div>
             </div>

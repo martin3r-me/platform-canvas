@@ -1,0 +1,63 @@
+<?php
+
+namespace Platform\Canvas\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Platform\ActivityLog\Traits\LogsActivity;
+use Symfony\Component\Uid\UuidV7;
+
+class WorkshopNote extends Model
+{
+    use LogsActivity, SoftDeletes;
+
+    protected $table = 'canvas_workshop_notes';
+
+    protected $fillable = [
+        'uuid',
+        'canvas_id',
+        'title',
+        'content',
+        'color',
+        'position_x',
+        'position_y',
+        'width',
+        'height',
+        'created_by_user_id',
+    ];
+
+    protected $casts = [
+        'position_x' => 'float',
+        'position_y' => 'float',
+        'width' => 'integer',
+        'height' => 'integer',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $model) {
+            if (empty($model->uuid)) {
+                do {
+                    $uuid = UuidV7::generate();
+                } while (self::where('uuid', $uuid)->exists());
+                $model->uuid = $uuid;
+            }
+        });
+    }
+
+    public function canvas(): BelongsTo
+    {
+        return $this->belongsTo(Canvas::class, 'canvas_id');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(\Platform\Core\Models\User::class, 'created_by_user_id');
+    }
+
+    public static function allowedColors(): array
+    {
+        return ['yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'teal', 'red'];
+    }
+}
