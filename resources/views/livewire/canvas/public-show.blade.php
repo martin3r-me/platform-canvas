@@ -192,7 +192,7 @@
                             </button>
                         </div>
                     @else
-                        <select wire:model="commentBlockId" class="w-full text-[11px] rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-bg)] text-[var(--ui-secondary)] px-2.5 py-1.5 mb-2 focus:ring-1 focus:ring-blue-500">
+                        <select wire:model="commentBlockId" class="w-full appearance-none text-[11px] rounded-lg border border-gray-200 bg-white text-gray-900 px-2.5 py-1.5 pr-8 mb-2 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg+xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22+viewBox%3D%220+0+20+20%22+fill%3D%22%236b7280%22%3E%3Cpath+fill-rule%3D%22evenodd%22+d%3D%22M5.23+7.21a.75.75+0+011.06.02L10+11.168l3.71-3.938a.75.75+0+111.08+1.04l-4.25+4.5a.75.75+0+01-1.08+0l-4.25-4.5a.75.75+0+01.02-1.06z%22+clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_6px_center] bg-no-repeat focus:ring-1 focus:ring-blue-500">
                             <option value="">Canvas-weiter Kommentar</option>
                             @foreach($canvas->buildingBlocks as $block)
                                 <option value="{{ $block->id }}">{{ $block->label }}</option>
