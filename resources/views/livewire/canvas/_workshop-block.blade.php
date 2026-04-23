@@ -5,10 +5,11 @@
     $blockEntries = collect($entries)->where('block_key', $blockKey)->values();
     $blockModel = $block;
     $map = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
+    $hasAreaMap = !empty($map) && isset($map[$blockKey]);
     $areaKey = $map[$blockKey] ?? $blockKey;
 @endphp
 
-<div class="workshop-block" style="grid-area: {{ $areaKey }}">
+<div class="workshop-block" @if($hasAreaMap) style="grid-area: {{ $areaKey }}" @endif>
     {{-- Header --}}
     <div class="workshop-block-header">
         <div class="flex items-center gap-2">
@@ -31,11 +32,14 @@
         @foreach($blockEntries as $entry)
             @php
                 $meta = $entry['metadata'] ?? [];
-                $x = $meta['x'] ?? (20 + $loop->index * 30);
-                $y = $meta['y'] ?? (20 + $loop->index * 30);
                 $w = $meta['width'] ?? 200;
                 $h = $meta['height'] ?? 150;
                 $color = $meta['color'] ?? 'yellow';
+                // Arrange notes in a grid pattern (3 columns) with spacing
+                $col = $loop->index % 3;
+                $row = intdiv($loop->index, 3);
+                $x = $meta['x'] ?? (10 + $col * ($w + 15));
+                $y = $meta['y'] ?? (10 + $row * ($h + 15));
             @endphp
             <div class="workshop-note workshop-note-{{ $color }}"
                  data-entry-id="{{ $entry['id'] }}"

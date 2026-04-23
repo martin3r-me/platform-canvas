@@ -161,8 +161,8 @@ class Show extends Component
             'entry_type' => 'text',
             'position' => $existingCount + 1,
             'metadata' => [
-                'x' => 20 + ($existingCount % 4) * 30,
-                'y' => 20 + ($existingCount % 4) * 30,
+                'x' => 10 + ($existingCount % 3) * 215,
+                'y' => 10 + intdiv($existingCount, 3) * 165,
                 'width' => 200,
                 'height' => 150,
                 'color' => 'yellow',
