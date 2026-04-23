@@ -11,14 +11,14 @@
         ]" />
 
         {{-- Typ-Filter + Tabs --}}
-        <div class="px-4 bg-[var(--ui-surface)]/90 border-b border-[var(--ui-border)]/40 backdrop-blur">
+        <div class="px-4 bg-white/90 border-b border-gray-200/40 backdrop-blur">
             <div class="flex items-center justify-between gap-4 h-10">
                 {{-- Links: Typ-Filter Chips --}}
                 <div class="flex items-center gap-1.5 min-w-0 overflow-x-auto">
                     @if($canvasTypes->count() > 1)
                     <button
                         wire:click="setTypeFilter('')"
-                        class="px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all {{ $typeFilter === '' ? 'bg-[rgb(var(--ui-primary-rgb))] text-white' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                        class="px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all {{ $typeFilter === '' ? 'bg-[#f2ca52] text-[#1a1a2e] shadow-sm' : 'text-gray-400 hover:text-[#1a1a2e]' }}"
                     >
                         Alle ({{ $totalCount }})
                     </button>
@@ -27,7 +27,7 @@
                         @if($count > 0)
                         <button
                             wire:click="setTypeFilter('{{ $type->key }}')"
-                            class="px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all {{ $typeFilter === $type->key ? 'bg-[rgb(var(--ui-primary-rgb))] text-white' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                            class="px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all {{ $typeFilter === $type->key ? 'bg-[#f2ca52] text-[#1a1a2e] shadow-sm' : 'text-gray-400 hover:text-[#1a1a2e]' }}"
                         >
                             {{ $type->name }} ({{ $count }})
                         </button>
@@ -38,16 +38,16 @@
 
                 {{-- Rechts: Suche + Aktiv / Erledigt Tabs --}}
                 <div class="flex items-center gap-3 flex-shrink-0">
-                    <x-ui-input-text
+                    <input
+                        type="text"
                         wire:model.live.debounce.300ms="search"
                         placeholder="Suchen..."
-                        size="sm"
-                        class="w-44"
+                        class="w-44 px-3 py-1.5 text-[13px] rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f2ca52]/30 focus:border-[#f2ca52] transition-colors"
                     />
                     <div class="flex items-center gap-1">
                         <button
                             wire:click="setView('active')"
-                            class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'active' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                            class="px-3 py-1 rounded-full text-xs font-medium transition-all {{ $view === 'active' ? 'bg-[#f2ca52]/20 text-[#1a1a2e] font-semibold' : 'text-gray-400 hover:text-[#1a1a2e]' }}"
                         >
                             Aktiv
                             @if($activeCount > 0)
@@ -56,7 +56,7 @@
                         </button>
                         <button
                             wire:click="setView('done')"
-                            class="px-3 py-1 rounded-md text-xs font-medium transition-all {{ $view === 'done' ? 'bg-[var(--ui-muted-5)] text-[var(--ui-secondary)]' : 'text-[var(--ui-muted)] hover:text-[var(--ui-secondary)]' }}"
+                            class="px-3 py-1 rounded-full text-xs font-medium transition-all {{ $view === 'done' ? 'bg-[#f2ca52]/20 text-[#1a1a2e] font-semibold' : 'text-gray-400 hover:text-[#1a1a2e]' }}"
                         >
                             Erledigt
                             @if($doneCount > 0)
@@ -75,23 +75,35 @@
 
             {{-- Stats --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ count($stats) }} gap-3">
-                <x-ui-dashboard-tile
-                    title="Gesamt"
-                    :count="$stats['total']"
-                    subtitle="Canvases"
-                    icon="squares-2x2"
-                    variant="secondary"
-                    size="lg"
-                />
+                {{-- Gesamt --}}
+                <div class="p-5 rounded-2xl border border-gray-200 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Gesamt</span>
+                        <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center">
+                            @svg('heroicon-o-squares-2x2', 'w-5 h-5 text-[#f2ca52]')
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-[#1a1a2e]">{{ $stats['total'] }}</div>
+                    <div class="text-xs text-gray-400 mt-1">Canvases</div>
+                </div>
                 @if($view === 'done')
                     @foreach(\Platform\Canvas\Models\Canvas::DONE_STATUSES as $status)
-                    <x-ui-dashboard-tile
-                        :title="\Platform\Canvas\Models\Canvas::STATUS_LABELS[$status]"
-                        :count="$stats[$status] ?? 0"
-                        :icon="str_replace('heroicon-o-', '', \Platform\Canvas\Models\Canvas::STATUS_ICONS[$status])"
-                        :variant="\Platform\Canvas\Models\Canvas::STATUS_VARIANTS[$status]"
-                        size="lg"
-                    />
+                    @php
+                        $statusColors = [
+                            'completed' => ['bg' => 'bg-green-50', 'text' => 'text-green-600'],
+                            'discarded' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-400'],
+                        ];
+                        $sc = $statusColors[$status] ?? ['bg' => 'bg-gray-50', 'text' => 'text-gray-400'];
+                    @endphp
+                    <div class="p-5 rounded-2xl border border-gray-200 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$status] }}</span>
+                            <div class="w-9 h-9 rounded-xl {{ $sc['bg'] }} flex items-center justify-center">
+                                @svg(str_replace('heroicon-o-', '', \Platform\Canvas\Models\Canvas::STATUS_ICONS[$status]) ? \Platform\Canvas\Models\Canvas::STATUS_ICONS[$status] : 'heroicon-o-check-circle', 'w-5 h-5 ' . $sc['text'])
+                            </div>
+                        </div>
+                        <div class="text-3xl font-bold text-[#1a1a2e]">{{ $stats[$status] ?? 0 }}</div>
+                    </div>
                     @endforeach
                 @endif
             </div>
@@ -99,21 +111,23 @@
             @if($view === 'active')
                 {{-- Aktiv-Tab: Flat list sorted by updated_at --}}
                 @if($activeCanvases->isNotEmpty())
-                    <x-ui-panel>
-                        <x-ui-table compact="true">
-                            <x-ui-table-header>
-                                <x-ui-table-header-cell compact="true">Name</x-ui-table-header-cell>
-                                <x-ui-table-header-cell compact="true">Typ</x-ui-table-header-cell>
-                                <x-ui-table-header-cell compact="true">Tags</x-ui-table-header-cell>
-                                <x-ui-table-header-cell compact="true">Erstellt von</x-ui-table-header-cell>
-                                <x-ui-table-header-cell compact="true">Aktualisiert</x-ui-table-header-cell>
-                                <x-ui-table-header-cell compact="true"></x-ui-table-header-cell>
-                            </x-ui-table-header>
-                            <x-ui-table-body>
+                    <section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-gray-100">
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Name</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Typ</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Tags</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Erstellt von</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Aktualisiert</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
                                 @foreach($activeCanvases as $canvas)
                                 @php $canvasColor = $canvas->color; @endphp
-                                <x-ui-table-row wire:key="canvas-{{ $canvas->id }}" compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
-                                    <x-ui-table-cell compact="true">
+                                <tr wire:key="canvas-{{ $canvas->id }}" class="hover:bg-yellow-50/50 transition-colors cursor-pointer" onclick="window.Livewire.navigate('{{ route('canvas.canvases.show', $canvas) }}')">
+                                    <td class="px-4 py-2.5">
                                         <div class="flex items-center gap-2">
                                             @if($canvasColor)
                                             <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $canvasColor }}"></span>
@@ -122,65 +136,65 @@
                                             @svg('heroicon-o-lock-closed', 'w-3.5 h-3.5 text-yellow-500 flex-shrink-0')
                                             @endif
                                             <div>
-                                                <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
+                                                <div class="text-[13px] font-medium text-[#1a1a2e]">{{ $canvas->name }}</div>
                                                 @if($canvas->description)
-                                                <div class="text-xs text-[var(--ui-muted)] truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
+                                                <div class="text-xs text-gray-400 truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
                                                 @endif
                                             </div>
                                         </div>
-                                    </x-ui-table-cell>
-                                    <x-ui-table-cell compact="true">
-                                        <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
-                                    </x-ui-table-cell>
-                                    <x-ui-table-cell compact="true">
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">{{ $canvas->canvasType?->name ?? '-' }}</span>
+                                    </td>
+                                    <td class="px-4 py-2.5">
                                         @if($canvas->tags->isNotEmpty())
                                         <div class="flex flex-wrap gap-1">
                                             @foreach($canvas->tags->take(3) as $tag)
-                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--ui-muted-5)] text-[var(--ui-muted)]">{{ $tag->name }}</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">{{ $tag->name }}</span>
                                             @endforeach
                                             @if($canvas->tags->count() > 3)
-                                            <span class="text-[10px] text-[var(--ui-muted)]">+{{ $canvas->tags->count() - 3 }}</span>
+                                            <span class="text-[10px] text-gray-400">+{{ $canvas->tags->count() - 3 }}</span>
                                             @endif
                                         </div>
                                         @endif
-                                    </x-ui-table-cell>
-                                    <x-ui-table-cell compact="true">
-                                        <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->createdByUser?->name ?? '-' }}</span>
-                                    </x-ui-table-cell>
-                                    <x-ui-table-cell compact="true">
-                                        <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->updated_at?->diffForHumans() }}</span>
-                                    </x-ui-table-cell>
-                                    <x-ui-table-cell compact="true">
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        <span class="text-[13px] text-gray-400">{{ $canvas->createdByUser?->name ?? '-' }}</span>
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        <span class="text-[13px] text-gray-400">{{ $canvas->updated_at?->diffForHumans() }}</span>
+                                    </td>
+                                    <td class="px-4 py-2.5">
                                         <div x-data="{ open: false }" x-on:click.stop x-on:mousedown.stop class="relative">
-                                            <button x-on:click="open = !open" class="px-2.5 py-1 rounded-md text-xs font-medium text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-all">
+                                            <button x-on:click="open = !open" class="px-2.5 py-1 rounded-full text-xs font-medium text-gray-400 hover:text-[#1a1a2e] hover:bg-yellow-50 transition-all">
                                                 Erledigen
                                                 @svg('heroicon-o-chevron-down', 'w-3 h-3 inline ml-0.5')
                                             </button>
-                                            <div x-show="open" x-on:click.outside="open = false" x-transition class="absolute right-0 top-full mt-1 w-40 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-surface)] shadow-lg z-50">
-                                                <button wire:click="updateStatus({{ $canvas->id }}, 'completed')" x-on:click="open = false" class="flex items-center gap-2 w-full px-3 py-2 text-xs text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-colors rounded-t-lg">
+                                            <div x-show="open" x-on:click.outside="open = false" x-transition class="absolute right-0 top-full mt-1 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-50">
+                                                <button wire:click="updateStatus({{ $canvas->id }}, 'completed')" x-on:click="open = false" class="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1a1a2e] hover:bg-yellow-50 transition-colors rounded-t-xl">
                                                     @svg('heroicon-o-check-circle', 'w-4 h-4 text-green-500')
                                                     Abgeschlossen
                                                 </button>
-                                                <button wire:click="updateStatus({{ $canvas->id }}, 'discarded')" x-on:click="open = false" class="flex items-center gap-2 w-full px-3 py-2 text-xs text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-colors rounded-b-lg">
-                                                    @svg('heroicon-o-x-circle', 'w-4 h-4 text-[var(--ui-muted)]')
+                                                <button wire:click="updateStatus({{ $canvas->id }}, 'discarded')" x-on:click="open = false" class="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1a1a2e] hover:bg-yellow-50 transition-colors rounded-b-xl">
+                                                    @svg('heroicon-o-x-circle', 'w-4 h-4 text-gray-400')
                                                     Verworfen
                                                 </button>
                                             </div>
                                         </div>
-                                    </x-ui-table-cell>
-                                </x-ui-table-row>
+                                    </td>
+                                </tr>
                                 @endforeach
-                            </x-ui-table-body>
-                        </x-ui-table>
-                    </x-ui-panel>
+                            </tbody>
+                        </table>
+                    </section>
                 @else
-                    <x-ui-panel>
+                    <section class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-12 text-center">
-                            @svg('heroicon-o-squares-2x2', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
-                            <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">Noch keine aktiven Canvases</h3>
-                            <p class="text-[var(--ui-muted)]">Erstelle dein erstes Canvas per Chat.</p>
+                            @svg('heroicon-o-squares-2x2', 'w-16 h-16 text-gray-300 mx-auto mb-4')
+                            <h3 class="text-lg font-semibold text-[#1a1a2e] mb-2">Noch keine aktiven Canvases</h3>
+                            <p class="text-gray-400">Erstelle dein erstes Canvas per Chat.</p>
                         </div>
-                    </x-ui-panel>
+                    </section>
                 @endif
             @else
                 {{-- Erledigt-Tab: Grouped by completed/discarded --}}
@@ -190,28 +204,30 @@
                         @php $hasAnyCanvas = true; @endphp
                         <div>
                             <div class="flex items-center gap-2 mb-3">
-                                @svg(\Platform\Canvas\Models\Canvas::STATUS_ICONS[$status], 'w-5 h-5 text-[var(--ui-muted)]')
-                                <h2 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider">
+                                @svg(\Platform\Canvas\Models\Canvas::STATUS_ICONS[$status], 'w-5 h-5 text-gray-400')
+                                <h2 class="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">
                                     {{ \Platform\Canvas\Models\Canvas::STATUS_LABELS[$status] }}
                                 </h2>
-                                <span class="text-xs text-[var(--ui-muted)]">({{ $grouped[$status]->count() }})</span>
+                                <span class="text-xs text-gray-400">({{ $grouped[$status]->count() }})</span>
                             </div>
 
-                            <x-ui-panel>
-                                <x-ui-table compact="true">
-                                    <x-ui-table-header>
-                                        <x-ui-table-header-cell compact="true">Name</x-ui-table-header-cell>
-                                        <x-ui-table-header-cell compact="true">Typ</x-ui-table-header-cell>
-                                        <x-ui-table-header-cell compact="true">Tags</x-ui-table-header-cell>
-                                        <x-ui-table-header-cell compact="true">Erstellt von</x-ui-table-header-cell>
-                                        <x-ui-table-header-cell compact="true">Aktualisiert</x-ui-table-header-cell>
-                                        <x-ui-table-header-cell compact="true"></x-ui-table-header-cell>
-                                    </x-ui-table-header>
-                                    <x-ui-table-body>
+                            <section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="border-b border-gray-100">
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Name</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Typ</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Tags</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Erstellt von</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Aktualisiert</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
                                         @foreach($grouped[$status] as $canvas)
                                         @php $canvasColor = $canvas->color; @endphp
-                                        <x-ui-table-row wire:key="canvas-{{ $canvas->id }}" compact="true" clickable="true" :href="route('canvas.canvases.show', $canvas)" wire:navigate>
-                                            <x-ui-table-cell compact="true">
+                                        <tr wire:key="canvas-{{ $canvas->id }}" class="hover:bg-yellow-50/50 transition-colors cursor-pointer" onclick="window.Livewire.navigate('{{ route('canvas.canvases.show', $canvas) }}')">
+                                            <td class="px-4 py-2.5">
                                                 <div class="flex items-center gap-2">
                                                     @if($canvasColor)
                                                     <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $canvasColor }}"></span>
@@ -220,59 +236,59 @@
                                                     @svg('heroicon-o-lock-closed', 'w-3.5 h-3.5 text-yellow-500 flex-shrink-0')
                                                     @endif
                                                     <div>
-                                                        <div class="font-medium text-[var(--ui-secondary)]">{{ $canvas->name }}</div>
+                                                        <div class="text-[13px] font-medium text-[#1a1a2e]">{{ $canvas->name }}</div>
                                                         @if($canvas->description)
-                                                        <div class="text-xs text-[var(--ui-muted)] truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
+                                                        <div class="text-xs text-gray-400 truncate max-w-xs mt-0.5">{{ Str::limit($canvas->description, 60) }}</div>
                                                         @endif
                                                     </div>
                                                 </div>
-                                            </x-ui-table-cell>
-                                            <x-ui-table-cell compact="true">
-                                                <x-ui-badge variant="secondary" size="sm">{{ $canvas->canvasType?->name ?? '-' }}</x-ui-badge>
-                                            </x-ui-table-cell>
-                                            <x-ui-table-cell compact="true">
+                                            </td>
+                                            <td class="px-4 py-2.5">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">{{ $canvas->canvasType?->name ?? '-' }}</span>
+                                            </td>
+                                            <td class="px-4 py-2.5">
                                                 @if($canvas->tags->isNotEmpty())
                                                 <div class="flex flex-wrap gap-1">
                                                     @foreach($canvas->tags->take(3) as $tag)
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--ui-muted-5)] text-[var(--ui-muted)]">{{ $tag->name }}</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">{{ $tag->name }}</span>
                                                     @endforeach
                                                     @if($canvas->tags->count() > 3)
-                                                    <span class="text-[10px] text-[var(--ui-muted)]">+{{ $canvas->tags->count() - 3 }}</span>
+                                                    <span class="text-[10px] text-gray-400">+{{ $canvas->tags->count() - 3 }}</span>
                                                     @endif
                                                 </div>
                                                 @endif
-                                            </x-ui-table-cell>
-                                            <x-ui-table-cell compact="true">
-                                                <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->createdByUser?->name ?? '-' }}</span>
-                                            </x-ui-table-cell>
-                                            <x-ui-table-cell compact="true">
-                                                <span class="text-sm text-[var(--ui-muted)]">{{ $canvas->updated_at?->diffForHumans() }}</span>
-                                            </x-ui-table-cell>
-                                            <x-ui-table-cell compact="true">
+                                            </td>
+                                            <td class="px-4 py-2.5">
+                                                <span class="text-[13px] text-gray-400">{{ $canvas->createdByUser?->name ?? '-' }}</span>
+                                            </td>
+                                            <td class="px-4 py-2.5">
+                                                <span class="text-[13px] text-gray-400">{{ $canvas->updated_at?->diffForHumans() }}</span>
+                                            </td>
+                                            <td class="px-4 py-2.5">
                                                 <div x-on:click.stop x-on:mousedown.stop>
-                                                    <button wire:click="updateStatus({{ $canvas->id }}, 'open')" class="px-2.5 py-1 rounded-md text-xs font-medium text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-all">
+                                                    <button wire:click="updateStatus({{ $canvas->id }}, 'open')" class="px-2.5 py-1 rounded-full text-xs font-medium text-gray-400 hover:text-[#1a1a2e] hover:bg-yellow-50 transition-all">
                                                         @svg('heroicon-o-arrow-path', 'w-3.5 h-3.5 inline mr-0.5')
                                                         Wieder oeffnen
                                                     </button>
                                                 </div>
-                                            </x-ui-table-cell>
-                                        </x-ui-table-row>
+                                            </td>
+                                        </tr>
                                         @endforeach
-                                    </x-ui-table-body>
-                                </x-ui-table>
-                            </x-ui-panel>
+                                    </tbody>
+                                </table>
+                            </section>
                         </div>
                     @endif
                 @endforeach
 
                 @if(! $hasAnyCanvas)
-                <x-ui-panel>
+                <section class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <div class="p-12 text-center">
-                        @svg('heroicon-o-check-circle', 'w-16 h-16 text-[var(--ui-muted)] mx-auto mb-4')
-                        <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">Keine erledigten Canvases</h3>
-                        <p class="text-[var(--ui-muted)]">Abgeschlossene und verworfene Canvases erscheinen hier.</p>
+                        @svg('heroicon-o-check-circle', 'w-16 h-16 text-gray-300 mx-auto mb-4')
+                        <h3 class="text-lg font-semibold text-[#1a1a2e] mb-2">Keine erledigten Canvases</h3>
+                        <p class="text-gray-400">Abgeschlossene und verworfene Canvases erscheinen hier.</p>
                     </div>
-                </x-ui-panel>
+                </section>
                 @endif
             @endif
         </div>
