@@ -4,7 +4,8 @@
     $label = $blockDef['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
     $blockEntries = collect($entries)->where('block_key', $blockKey)->values();
     $blockModel = $block;
-    $areaKey = $layout['area_map'][$blockKey] ?? $blockKey;
+    $map = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
+    $areaKey = $map[$blockKey] ?? $blockKey;
 @endphp
 
 <div class="workshop-block" style="grid-area: {{ $areaKey }}">
