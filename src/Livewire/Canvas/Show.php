@@ -181,6 +181,25 @@ class Show extends Component
         $note->delete();
     }
 
+    public function getWorkshopNotes(): array
+    {
+        return $this->canvas->workshopNotes()
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (WorkshopNote $n) => [
+                'id' => $n->id,
+                'title' => $n->title,
+                'content' => $n->content ?? '',
+                'color' => $n->color,
+                'x' => $n->position_x,
+                'y' => $n->position_y,
+                'width' => $n->width,
+                'height' => $n->height,
+            ])
+            ->values()
+            ->toArray();
+    }
+
     public function adoptNote(int $noteId, int $blockId): void
     {
         $note = WorkshopNote::find($noteId);
