@@ -115,17 +115,24 @@ class Show extends Component
 
     // ─── Workshop CRUD (WorkshopNote-based) ────────────────
 
-    public function addWorkshopNote(): void
+    public function addWorkshopNote(array $position = []): void
     {
         $existingCount = $this->canvas->workshopNotes()->count();
+        $offset = $existingCount * 25; // stagger stacked notes
+
+        // Use viewport-center position from JS, or default to grid center
+        $cols = (int) ($this->canvas->canvasType?->layout['columns'] ?? 3);
+        $rows = (int) ($this->canvas->canvasType?->layout['rows'] ?? 3);
+        $defaultX = (5000 - max(1200, $cols * 300)) / 2 + 100;
+        $defaultY = (3000 - max(800, $rows * 300)) / 2 + 100;
 
         WorkshopNote::create([
             'canvas_id' => $this->canvas->id,
             'title' => '',
             'content' => '',
             'color' => 'yellow',
-            'position_x' => 100 + ($existingCount % 4) * 230,
-            'position_y' => 100 + intdiv($existingCount, 4) * 180,
+            'position_x' => ($position['x'] ?? $defaultX) + $offset,
+            'position_y' => ($position['y'] ?? $defaultY) + $offset,
             'width' => 200,
             'height' => 150,
             'created_by_user_id' => Auth::id(),
