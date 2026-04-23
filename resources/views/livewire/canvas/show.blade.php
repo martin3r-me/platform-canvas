@@ -323,12 +323,9 @@
         @else
         {{-- ═══ WORKSHOP VIEW ═══ --}}
         @php
-            $gridCols = (int) ($layout['columns'] ?? 2);
-            $gridRows = (int) ($layout['rows'] ?? 2);
-            $gridAreasRaw = $layout['areas'] ?? '';
-            $gridAreas = is_array($gridAreasRaw) ? implode(' / ', $gridAreasRaw) : (string) $gridAreasRaw;
-            $areaMap = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
-            // Build blocks lookup by key
+            $gridCols = $layout['columns'];
+            $gridRows = $layout['rows'];
+            $gridAreas = $layout['areas'];
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
         @endphp
 

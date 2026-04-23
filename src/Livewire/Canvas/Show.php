@@ -325,7 +325,16 @@ class Show extends Component
 
         $canvasData = $this->canvas->toCanvasArray();
         $analysisData = (new AnalysisService())->analyze($this->canvas);
-        $layout = $this->canvas->canvasType?->layout ?? [];
+        $rawLayout = $this->canvas->canvasType?->layout ?? [];
+        // Normalize layout values: areas may be string or array, area_map may be missing
+        $areasRaw = $rawLayout['areas'] ?? '';
+        $layout = [
+            'type' => $rawLayout['type'] ?? 'grid',
+            'columns' => (int) ($rawLayout['columns'] ?? 2),
+            'rows' => (int) ($rawLayout['rows'] ?? 2),
+            'areas' => is_array($areasRaw) ? implode(' / ', $areasRaw) : (string) $areasRaw,
+            'area_map' => is_array($rawLayout['area_map'] ?? null) ? $rawLayout['area_map'] : [],
+        ];
         $blockDefs = $this->canvas->canvasType?->block_definitions ?? [];
 
         $commentService = new CommentService();
