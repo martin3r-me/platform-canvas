@@ -325,7 +325,8 @@
         @php
             $gridCols = $layout['columns'] ?? 2;
             $gridRows = $layout['rows'] ?? 2;
-            $gridAreas = $layout['areas'] ?? '';
+            $gridAreasRaw = $layout['areas'] ?? '';
+            $gridAreas = is_array($gridAreasRaw) ? implode(' / ', $gridAreasRaw) : $gridAreasRaw;
             $areaMap = $layout['area_map'] ?? [];
             // Build blocks lookup by key
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
