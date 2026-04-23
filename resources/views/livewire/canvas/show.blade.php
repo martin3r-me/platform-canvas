@@ -327,8 +327,8 @@
             $gridRows = $layout['rows'];
             $gridAreas = $layout['areas'];
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
-            $gridW = max(1200, $gridCols * 300);
-            $gridH = max(800, $gridRows * 300);
+            $gridW = max(1200, $gridCols * 280);
+            $gridH = max(800, $gridRows * 280);
             $boardW = 5000;
             $boardH = 3000;
             $gridLeft = intval(($boardW - $gridW) / 2);
@@ -380,13 +380,17 @@
                     top: {{ $gridTop }}px;
                     left: {{ $gridLeft }}px;
                     width: {{ $gridW }}px;
+                    height: {{ $gridH }}px;
                     display: grid;
                     grid-template-columns: repeat({{ $gridCols }}, 1fr);
                     grid-template-rows: repeat({{ $gridRows }}, 1fr);
                     @if($gridAreas)
                     grid-template-areas: {{ collect(explode('/', $gridAreas))->map(fn($row) => "'" . trim($row) . "'")->implode(' ') }};
                     @endif
-                    gap: 1rem;
+                    gap: 0;
+                    border: 1.5px solid #2d2d2d;
+                    border-radius: 4px;
+                    overflow: hidden;
                 ">
                     @foreach($blockDefs as $def)
                         @include('canvas::livewire.canvas._workshop-grid-block', [
