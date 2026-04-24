@@ -326,6 +326,7 @@
             $gridCols = $layout['columns'];
             $gridRows = $layout['rows'];
             $gridAreas = $layout['areas'];
+            $areaMap = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
             $gridW = max(1200, $gridCols * 280);
             $gridH = max(800, $gridRows * 280);
@@ -333,6 +334,18 @@
             $boardH = 3000;
             $gridLeft = intval(($boardW - $gridW) / 2);
             $gridTop = intval(($boardH - $gridH) / 2);
+
+            // Replace short area names (kp, ka...) with full block keys (key_partners, key_activities...)
+            // so we can use block keys directly as grid-area values without needing area_map at render time
+            $resolvedAreas = $gridAreas;
+            if (!empty($areaMap) && !empty($gridAreas)) {
+                $reverseMap = array_flip($areaMap); // short → block_key
+                // Sort by key length desc to avoid partial replacements (e.g. 'cs' matching inside 'cost')
+                uksort($reverseMap, fn($a, $b) => strlen($b) - strlen($a));
+                foreach ($reverseMap as $short => $blockKey) {
+                    $resolvedAreas = preg_replace('/\b' . preg_quote($short, '/') . '\b/', $blockKey, $resolvedAreas);
+                }
+            }
         @endphp
 
         <div x-data="workshopBoard({
@@ -384,8 +397,8 @@
                     display: grid;
                     grid-template-columns: repeat({{ $gridCols }}, 1fr);
                     grid-template-rows: repeat({{ $gridRows }}, 1fr);
-                    @if($gridAreas)
-                    grid-template-areas: {{ collect(explode('/', $gridAreas))->map(fn($row) => "'" . trim($row) . "'")->implode(' ') }};
+                    @if($resolvedAreas)
+                    grid-template-areas: {{ collect(explode('/', $resolvedAreas))->map(fn($row) => "'" . trim($row) . "'")->implode(' ') }};
                     @endif
                     gap: 1.5px;
                     background: #2d2d2d;

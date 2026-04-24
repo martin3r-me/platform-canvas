@@ -6,9 +6,8 @@
     $guidingQuestions = $blockDef['guiding_questions'] ?? [];
     $blockData = $canvasData['blocks'][$blockKey] ?? null;
     $entries = $blockData['entries'] ?? [];
-    $map = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
-    $hasAreaMap = !empty($map) && isset($map[$blockKey]);
-    $areaKey = $map[$blockKey] ?? $blockKey;
+    // Grid-area: use block key directly (parent view resolves short names → block keys in areas CSS)
+    $hasAreas = !empty($layout['areas'] ?? '');
 
     // Icon mapping for known block types
     $iconMap = [
@@ -45,7 +44,7 @@
 
 <div class="workshop-grid-block"
      data-block-id="{{ $block?->id }}"
-     @if($hasAreaMap) style="grid-area: {{ $areaKey }}" @endif
+     @if($hasAreas) style="grid-area: {{ $blockKey }}" @endif
 >
     {{-- Header: Title + Icon --}}
     <div class="workshop-grid-block-header">
