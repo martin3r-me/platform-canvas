@@ -391,7 +391,6 @@
              })"
              class="relative h-[calc(100vh-220px)] overflow-hidden"
              style="background: #eef0f4;"
-             x-bind:class="isFullscreen ? 'workshop-fullscreen' : ''"
         >
             {{-- Zoom Controls (outside board, not affected by transform) --}}
             <div class="workshop-zoom-controls">
