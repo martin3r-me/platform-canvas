@@ -325,7 +325,7 @@
         @php
             $gridCols = $layout['columns'];
             $gridRows = $layout['rows'];
-            $gridAreas = $layout['areas'];
+            $areasRaw = $layout['areas'];
             $areaMap = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
             $gridW = max(1200, $gridCols * 280);
@@ -335,15 +335,50 @@
             $gridLeft = intval(($boardW - $gridW) / 2);
             $gridTop = intval(($boardH - $gridH) / 2);
 
-            // Replace short area names (kp, ka...) with full block keys (key_partners, key_activities...)
-            // so we can use block keys directly as grid-area values without needing area_map at render time
-            $resolvedAreas = $gridAreas;
-            if (!empty($areaMap) && !empty($gridAreas)) {
-                $reverseMap = array_flip($areaMap); // short → block_key
-                // Sort by key length desc to avoid partial replacements (e.g. 'cs' matching inside 'cost')
-                uksort($reverseMap, fn($a, $b) => strlen($b) - strlen($a));
-                foreach ($reverseMap as $short => $blockKey) {
-                    $resolvedAreas = preg_replace('/\b' . preg_quote($short, '/') . '\b/', $blockKey, $resolvedAreas);
+            // Areas can be either:
+            // 1) String format (seeder): "kp ka vp cr cs / kp kr vp ch cs / ..."  + area_map
+            // 2) Array of objects (API/custom): [{block, col, row, colspan, rowspan}, ...]
+            // We normalize both to a per-block placement map: blockKey → {col, row, colspan, rowspan}
+            $blockPlacement = [];
+            if (is_array($areasRaw) && !empty($areasRaw) && isset($areasRaw[0]['block'])) {
+                // Format 2: array of placement objects
+                foreach ($areasRaw as $area) {
+                    $blockPlacement[$area['block']] = [
+                        'col' => $area['col'] ?? 1,
+                        'row' => $area['row'] ?? 1,
+                        'colspan' => $area['colspan'] ?? 1,
+                        'rowspan' => $area['rowspan'] ?? 1,
+                    ];
+                }
+            } elseif (is_string($areasRaw) && !empty($areasRaw) && !empty($areaMap)) {
+                // Format 1: CSS areas string + area_map → parse into placement
+                $reverseMap = array_flip($areaMap);
+                $rows = explode('/', $areasRaw);
+                $grid = [];
+                foreach ($rows as $ri => $row) {
+                    $tokens = preg_split('/\s+/', trim($row), -1, PREG_SPLIT_NO_EMPTY);
+                    foreach ($tokens as $ci => $token) {
+                        $blockKey = $reverseMap[$token] ?? $token;
+                        $grid[$ri][$ci] = $blockKey;
+                    }
+                }
+                // Derive placement from grid
+                $seen = [];
+                foreach ($grid as $ri => $cols) {
+                    foreach ($cols as $ci => $blockKey) {
+                        if (isset($seen[$blockKey])) continue;
+                        $seen[$blockKey] = true;
+                        $colspan = 1;
+                        while (($ci + $colspan) < count($cols) && $cols[$ci + $colspan] === $blockKey) $colspan++;
+                        $rowspan = 1;
+                        while (($ri + $rowspan) < count($grid) && ($grid[$ri + $rowspan][$ci] ?? null) === $blockKey) $rowspan++;
+                        $blockPlacement[$blockKey] = [
+                            'col' => $ci + 1,
+                            'row' => $ri + 1,
+                            'colspan' => $colspan,
+                            'rowspan' => $rowspan,
+                        ];
+                    }
                 }
             }
         @endphp
@@ -397,9 +432,6 @@
                     display: grid;
                     grid-template-columns: repeat({{ $gridCols }}, 1fr);
                     grid-template-rows: repeat({{ $gridRows }}, 1fr);
-                    @if($resolvedAreas)
-                    grid-template-areas: {{ collect(explode('/', $resolvedAreas))->map(fn($row) => "'" . trim($row) . "'")->implode(' ') }};
-                    @endif
                     gap: 1.5px;
                     background: #2d2d2d;
                     border: 1.5px solid #2d2d2d;
@@ -412,7 +444,7 @@
                             'blockDef' => $def,
                             'block' => $blocksById[$def['key']] ?? null,
                             'canvasData' => $canvasData,
-                            'layout' => $layout,
+                            'placement' => $blockPlacement[$def['key']] ?? null,
                         ])
                     @endforeach
                 </div>

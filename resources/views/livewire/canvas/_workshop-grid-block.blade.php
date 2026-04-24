@@ -1,4 +1,4 @@
-@props(['blockKey', 'blockDef', 'block', 'canvasData', 'layout'])
+@props(['blockKey', 'blockDef', 'block', 'canvasData', 'placement'])
 
 @php
     $label = $blockDef['label'] ?? ucfirst(str_replace('_', ' ', $blockKey));
@@ -6,8 +6,16 @@
     $guidingQuestions = $blockDef['guiding_questions'] ?? [];
     $blockData = $canvasData['blocks'][$blockKey] ?? null;
     $entries = $blockData['entries'] ?? [];
-    // Grid-area: use block key directly (parent view resolves short names → block keys in areas CSS)
-    $hasAreas = !empty($layout['areas'] ?? '');
+
+    // Grid placement via grid-column/grid-row
+    $gridStyle = '';
+    if ($placement) {
+        $col = $placement['col'];
+        $row = $placement['row'];
+        $colspan = $placement['colspan'] ?? 1;
+        $rowspan = $placement['rowspan'] ?? 1;
+        $gridStyle = "grid-column: {$col} / span {$colspan}; grid-row: {$row} / span {$rowspan};";
+    }
 
     // Icon mapping for known block types
     $iconMap = [
@@ -44,7 +52,7 @@
 
 <div class="workshop-grid-block"
      data-block-id="{{ $block?->id }}"
-     @if($hasAreas) style="grid-area: {{ $blockKey }}" @endif
+     @if($gridStyle) style="{{ $gridStyle }}" @endif
 >
     {{-- Header: Title + Icon --}}
     <div class="workshop-grid-block-header">
