@@ -391,7 +391,7 @@
                 gridLayout: {{ Js::from($layout) }}
              })"
              class="relative overflow-hidden"
-             :class="isFullscreen ? '' : 'h-[calc(100vh-220px)]'"
+             :class="isFullscreen ? 'workshop-fullscreen' : 'h-[calc(100vh-220px)]'"
              style="background: #eef0f4;"
         >
             {{-- Zoom Controls (outside board, not affected by transform) --}}
