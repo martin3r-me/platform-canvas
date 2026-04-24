@@ -425,13 +425,25 @@
                 </button>
             </div>
 
-            {{-- FAB: Add Note --}}
-            <button class="workshop-fab" x-on:click="addNote()" title="Neue Notiz">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                </svg>
-                <span>Notiz</span>
-            </button>
+            {{-- Element Toolbar --}}
+            <div class="workshop-toolbar">
+                <button class="workshop-toolbar-btn" x-on:click="addElement('note')" title="Sticky Note">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"/></svg>
+                    <span>Notiz</span>
+                </button>
+                <button class="workshop-toolbar-btn" x-on:click="addElement('text')" title="Textlabel">
+                    <span style="font-weight:800;font-size:14px;line-height:1;">T</span>
+                    <span>Text</span>
+                </button>
+                <button class="workshop-toolbar-btn" x-on:click="addElement('section')" title="Section / Frame">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><rect x="3" y="3" width="14" height="14" rx="2" stroke-dasharray="3 2"/></svg>
+                    <span>Section</span>
+                </button>
+                <button class="workshop-toolbar-btn" x-on:click="addElement('shape')" title="Form">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><circle cx="10" cy="10" r="7"/></svg>
+                    <span>Form</span>
+                </button>
+            </div>
 
             {{-- Board: JS owns this DOM entirely. Notes rendered by JS. --}}
             <div x-ref="board" class="workshop-board" style="width: {{ $boardW }}px; height: {{ $boardH }}px;">
@@ -441,10 +453,10 @@
                     top: {{ $gridTop }}px;
                     left: {{ $gridLeft }}px;
                     width: {{ $gridW }}px;
-                    height: {{ $gridH }}px;
+                    min-height: {{ $gridH }}px;
                     display: grid;
                     grid-template-columns: repeat({{ $gridCols }}, 1fr);
-                    grid-template-rows: repeat({{ $gridRows }}, 1fr);
+                    grid-template-rows: repeat({{ $gridRows }}, minmax(180px, auto));
                     gap: 1.5px;
                     background: #2d2d2d;
                     border: 1.5px solid #2d2d2d;

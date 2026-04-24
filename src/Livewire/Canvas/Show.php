@@ -115,8 +115,12 @@ class Show extends Component
 
     // ─── Workshop CRUD (WorkshopNote-based) ────────────────
 
-    public function addWorkshopNote(array $position = []): void
+    public function addWorkshopNote(array $position = [], string $type = 'note'): void
     {
+        if (!in_array($type, WorkshopNote::allowedTypes())) {
+            $type = 'note';
+        }
+
         $existingCount = $this->canvas->workshopNotes()->count();
         $offset = $existingCount * 25; // stagger stacked notes
 
@@ -126,15 +130,25 @@ class Show extends Component
         $defaultX = (5000 - max(1200, $cols * 300)) / 2 + 100;
         $defaultY = (3000 - max(800, $rows * 300)) / 2 + 100;
 
+        // Type-specific defaults
+        $defaults = match ($type) {
+            'text' => ['width' => 300, 'height' => 40, 'color' => 'yellow', 'metadata' => null],
+            'section' => ['width' => 500, 'height' => 400, 'color' => 'yellow', 'metadata' => null],
+            'shape' => ['width' => 120, 'height' => 120, 'color' => 'blue', 'metadata' => ['shape' => 'rect']],
+            default => ['width' => 200, 'height' => 150, 'color' => 'yellow', 'metadata' => null],
+        };
+
         WorkshopNote::create([
             'canvas_id' => $this->canvas->id,
             'title' => '',
             'content' => '',
-            'color' => 'yellow',
+            'color' => $defaults['color'],
+            'type' => $type,
             'position_x' => ($position['x'] ?? $defaultX) + $offset,
             'position_y' => ($position['y'] ?? $defaultY) + $offset,
-            'width' => 200,
-            'height' => 150,
+            'width' => $defaults['width'],
+            'height' => $defaults['height'],
+            'metadata' => $defaults['metadata'],
             'created_by_user_id' => Auth::id(),
         ]);
     }
@@ -191,13 +205,25 @@ class Show extends Component
                 'title' => $n->title,
                 'content' => $n->content ?? '',
                 'color' => $n->color,
+                'type' => $n->type ?? 'note',
                 'x' => $n->position_x,
                 'y' => $n->position_y,
                 'width' => $n->width,
                 'height' => $n->height,
+                'metadata' => $n->metadata,
             ])
             ->values()
             ->toArray();
+    }
+
+    public function updateNoteMetadata(int $noteId, array $meta): void
+    {
+        $note = WorkshopNote::find($noteId);
+        abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
+
+        $note->update([
+            'metadata' => array_merge($note->metadata ?? [], $meta),
+        ]);
     }
 
     public function adoptNote(int $noteId, int $blockId): void
@@ -373,10 +399,12 @@ class Show extends Component
                     'title' => $n->title,
                     'content' => $n->content ?? '',
                     'color' => $n->color,
+                    'type' => $n->type ?? 'note',
                     'x' => $n->position_x,
                     'y' => $n->position_y,
                     'width' => $n->width,
                     'height' => $n->height,
+                    'metadata' => $n->metadata,
                 ])
                 ->values()
                 ->toArray();

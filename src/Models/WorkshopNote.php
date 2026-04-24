@@ -20,10 +20,12 @@ class WorkshopNote extends Model
         'title',
         'content',
         'color',
+        'type',
         'position_x',
         'position_y',
         'width',
         'height',
+        'metadata',
         'created_by_user_id',
     ];
 
@@ -32,6 +34,7 @@ class WorkshopNote extends Model
         'position_y' => 'float',
         'width' => 'integer',
         'height' => 'integer',
+        'metadata' => 'array',
     ];
 
     protected static function booted(): void
@@ -59,5 +62,15 @@ class WorkshopNote extends Model
     public static function allowedColors(): array
     {
         return ['yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'teal', 'red'];
+    }
+
+    public static function allowedTypes(): array
+    {
+        return ['note', 'text', 'section', 'shape'];
+    }
+
+    public static function allowedShapes(): array
+    {
+        return ['rect', 'circle', 'diamond'];
     }
 }

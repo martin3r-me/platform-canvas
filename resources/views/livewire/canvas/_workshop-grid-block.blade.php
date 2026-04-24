@@ -80,7 +80,7 @@
                             <span class="grid-entry-title">{{ $entry['title'] }}</span>
                         @endif
                         @if(!empty($entry['content']))
-                            <span class="grid-entry-content">{{ Str::limit($entry['content'], 120) }}</span>
+                            <span class="grid-entry-content">{{ $entry['content'] }}</span>
                         @endif
                     </div>
                 @endforeach
