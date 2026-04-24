@@ -345,17 +345,12 @@ class Show extends Component
         $canvasData = $this->canvas->toCanvasArray();
         $analysisData = (new AnalysisService())->analyze($this->canvas);
         $rawLayout = $this->canvas->canvasType?->layout ?? [];
-        // Normalize layout values: areas may be string or array, area_map may be missing
-        $areasRaw = $rawLayout['areas'] ?? '';
+        // Pass layout values through — the view handles both string and array formats for 'areas'
         $layout = [
             'type' => $rawLayout['type'] ?? 'grid',
             'columns' => (int) ($rawLayout['columns'] ?? 2),
             'rows' => (int) ($rawLayout['rows'] ?? 2),
-            'areas' => is_string($areasRaw)
-                ? $areasRaw
-                : (is_array($areasRaw)
-                    ? implode(' / ', array_map(fn ($v) => is_array($v) ? implode(' ', $v) : (string) $v, $areasRaw))
-                    : ''),
+            'areas' => $rawLayout['areas'] ?? '',
             'area_map' => is_array($rawLayout['area_map'] ?? null) ? $rawLayout['area_map'] : [],
         ];
         $blockDefs = $this->canvas->canvasType?->block_definitions ?? [];
