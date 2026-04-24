@@ -226,6 +226,15 @@ class Show extends Component
         ]);
     }
 
+    public function updateWorkshopSettings(array $settings): void
+    {
+        $allowed = ['gridWidth', 'gridHeight'];
+        $current = $this->canvas->workshop_settings ?? [];
+        $merged = array_merge($current, array_intersect_key($settings, array_flip($allowed)));
+
+        $this->canvas->update(['workshop_settings' => $merged]);
+    }
+
     public function adoptNote(int $noteId, int $blockId): void
     {
         $note = WorkshopNote::find($noteId);

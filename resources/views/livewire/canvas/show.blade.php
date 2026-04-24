@@ -328,8 +328,9 @@
             $areasRaw = $layout['areas'];
             $areaMap = is_array($layout['area_map'] ?? null) ? $layout['area_map'] : [];
             $blocksById = $canvas->buildingBlocks->keyBy('block_key');
-            $gridW = max(1200, $gridCols * 280);
-            $gridH = max(800, $gridRows * 280);
+            $ws = $canvas->workshop_settings ?? [];
+            $gridW = (int) ($ws['gridWidth'] ?? max(1200, $gridCols * 280));
+            $gridH = (int) ($ws['gridHeight'] ?? max(800, $gridRows * 280));
             $boardW = 5000;
             $boardH = 3000;
             $gridLeft = intval(($boardW - $gridW) / 2);

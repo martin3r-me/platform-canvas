@@ -73,6 +73,7 @@ class Canvas extends Model implements AgendaRenderable
         'visibility',
         'public_token',
         'is_public',
+        'workshop_settings',
         'contextable_type',
         'contextable_id',
         'created_by_user_id',
@@ -81,6 +82,7 @@ class Canvas extends Model implements AgendaRenderable
     protected $casts = [
         'status' => 'string',
         'is_public' => 'boolean',
+        'workshop_settings' => 'array',
     ];
 
     protected static function booted(): void
