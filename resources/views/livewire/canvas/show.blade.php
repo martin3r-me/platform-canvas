@@ -387,7 +387,8 @@
                     @if($gridAreas)
                     grid-template-areas: {{ collect(explode('/', $gridAreas))->map(fn($row) => "'" . trim($row) . "'")->implode(' ') }};
                     @endif
-                    gap: 0;
+                    gap: 1.5px;
+                    background: #2d2d2d;
                     border: 1.5px solid #2d2d2d;
                     border-radius: 4px;
                     overflow: hidden;
