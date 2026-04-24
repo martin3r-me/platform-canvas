@@ -158,11 +158,22 @@ class Show extends Component
         $note = WorkshopNote::find($noteId);
         abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
 
+        $blockId = isset($pos['blockId']) ? (int) $pos['blockId'] : null;
+
+        // Verify the block belongs to this canvas if provided
+        if ($blockId) {
+            $block = \Platform\Canvas\Models\BuildingBlock::find($blockId);
+            if (!$block || $block->canvas_id !== $this->canvas->id) {
+                $blockId = null;
+            }
+        }
+
         $note->update([
             'position_x' => $pos['x'] ?? $note->position_x,
             'position_y' => $pos['y'] ?? $note->position_y,
             'width' => isset($pos['width']) ? (int) $pos['width'] : $note->width,
             'height' => isset($pos['height']) ? (int) $pos['height'] : $note->height,
+            'building_block_id' => $blockId,
         ]);
     }
 

@@ -17,6 +17,7 @@ class WorkshopNote extends Model
     protected $fillable = [
         'uuid',
         'canvas_id',
+        'building_block_id',
         'title',
         'content',
         'color',
@@ -52,6 +53,11 @@ class WorkshopNote extends Model
     public function canvas(): BelongsTo
     {
         return $this->belongsTo(Canvas::class, 'canvas_id');
+    }
+
+    public function buildingBlock(): BelongsTo
+    {
+        return $this->belongsTo(BuildingBlock::class, 'building_block_id');
     }
 
     public function createdByUser(): BelongsTo
