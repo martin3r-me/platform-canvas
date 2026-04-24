@@ -390,7 +390,8 @@
                 canvasBlocks: {{ Js::from(collect($blockDefs)->map(fn($d) => ['key' => $d['key'], 'label' => $d['label'] ?? $d['key'], 'id' => $blocksById[$d['key']]?->id ?? null])->values()) }},
                 gridLayout: {{ Js::from($layout) }}
              })"
-             class="relative h-[calc(100vh-220px)] overflow-hidden"
+             class="relative overflow-hidden"
+             :class="isFullscreen ? '' : 'h-[calc(100vh-220px)]'"
              style="background: #eef0f4;"
         >
             {{-- Zoom Controls (outside board, not affected by transform) --}}
