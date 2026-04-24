@@ -383,13 +383,15 @@
             }
         @endphp
 
-        <div x-data="workshopBoard({
+        <div wire:ignore
+             x-data="workshopBoard({
                 notes: {{ Js::from($workshopNotes) }},
                 canvasBlocks: {{ Js::from(collect($blockDefs)->map(fn($d) => ['key' => $d['key'], 'label' => $d['label'] ?? $d['key'], 'id' => $blocksById[$d['key']]?->id ?? null])->values()) }},
                 gridLayout: {{ Js::from($layout) }}
              })"
              class="relative h-[calc(100vh-220px)] overflow-hidden"
              style="background: #eef0f4;"
+             x-bind:class="isFullscreen ? 'workshop-fullscreen' : ''"
         >
             {{-- Zoom Controls (outside board, not affected by transform) --}}
             <div class="workshop-zoom-controls">
@@ -410,6 +412,18 @@
                         <path fill-rule="evenodd" d="M4.25 2A2.25 2.25 0 002 4.25v2.5a.75.75 0 001.5 0v-2.5a.75.75 0 01.75-.75h2.5a.75.75 0 000-1.5h-2.5zM13.25 2a.75.75 0 000 1.5h2.5a.75.75 0 01.75.75v2.5a.75.75 0 001.5 0v-2.5A2.25 2.25 0 0015.75 2h-2.5zM3.5 13.25a.75.75 0 00-1.5 0v2.5A2.25 2.25 0 004.25 18h2.5a.75.75 0 000-1.5h-2.5a.75.75 0 01-.75-.75v-2.5zM18 13.25a.75.75 0 00-1.5 0v2.5a.75.75 0 01-.75.75h-2.5a.75.75 0 000 1.5h2.5A2.25 2.25 0 0018 15.75v-2.5z" clip-rule="evenodd" />
                     </svg>
                 </button>
+                <button x-on:click="toggleFullscreen()" title="Vollbild">
+                    <template x-if="!isFullscreen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                            <path d="M3.28 2.22a.75.75 0 00-1.06 1.06L5.44 6.5H2.75a.75.75 0 000 1.5h4.5A.75.75 0 008 7.25v-4.5a.75.75 0 00-1.5 0v2.69L3.28 2.22zM16.72 2.22a.75.75 0 010 1.06L13.56 6.5h2.69a.75.75 0 010 1.5h-4.5A.75.75 0 0111 7.25v-4.5a.75.75 0 011.5 0v2.69l3.22-3.22a.75.75 0 011.06 0zM3.28 17.78a.75.75 0 001.06 0L7.56 14.5h-2.69a.75.75 0 010-1.5h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-2.69l-3.22 3.22a.75.75 0 01-1.06-1.06zM16.72 17.78a.75.75 0 01-1.06 0L12.44 14.5h2.69a.75.75 0 000-1.5h-4.5a.75.75 0 00-.75.75v4.5a.75.75 0 001.5 0v-2.69l3.22 3.22a.75.75 0 001.06-1.06z" />
+                        </svg>
+                    </template>
+                    <template x-if="isFullscreen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                            <path d="M3.28 2.22a.75.75 0 00-1.06 1.06L5.44 6.5H2.75a.75.75 0 000 1.5h4.5A.75.75 0 008 7.25v-4.5a.75.75 0 00-1.5 0v2.69L3.28 2.22z" />
+                        </svg>
+                    </template>
+                </button>
             </div>
 
             {{-- FAB: Add Note --}}
@@ -421,7 +435,7 @@
             </button>
 
             {{-- Board: JS owns this DOM entirely. Notes rendered by JS. --}}
-            <div x-ref="board" class="workshop-board" wire:ignore style="width: {{ $boardW }}px; height: {{ $boardH }}px;">
+            <div x-ref="board" class="workshop-board" style="width: {{ $boardW }}px; height: {{ $boardH }}px;">
                 {{-- Canvas Grid (read-only, Blade-rendered, static) --}}
                 <div class="workshop-canvas-background" style="
                     position: absolute;
