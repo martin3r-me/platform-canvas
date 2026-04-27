@@ -445,6 +445,13 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><circle cx="10" cy="10" r="7"/></svg>
                     <span>Form</span>
                 </button>
+                <button class="workshop-toolbar-btn"
+                        x-on:click="startConnectorMode()"
+                        :class="{ 'active': _connectorMode }"
+                        title="Verbindung">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M2 10a.75.75 0 01.75-.75h12.69l-4.72-4.72a.75.75 0 011.06-1.06l6 6a.75.75 0 010 1.06l-6 6a.75.75 0 11-1.06-1.06l4.72-4.72H2.75A.75.75 0 012 10z" clip-rule="evenodd"/></svg>
+                    <span>Pfeil</span>
+                </button>
             </div>
 
             {{-- Board: JS owns this DOM entirely. Notes rendered by JS. --}}

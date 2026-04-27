@@ -135,6 +135,7 @@ class Show extends Component
             'text' => ['width' => 300, 'height' => 40, 'color' => 'yellow', 'metadata' => null],
             'section' => ['width' => 500, 'height' => 400, 'color' => 'yellow', 'metadata' => null],
             'shape' => ['width' => 120, 'height' => 120, 'color' => 'blue', 'metadata' => ['shape' => 'rect']],
+            'connector' => ['width' => 0, 'height' => 0, 'color' => 'blue', 'metadata' => null],
             default => ['width' => 200, 'height' => 150, 'color' => 'yellow', 'metadata' => null],
         };
 
@@ -198,10 +199,54 @@ class Show extends Component
         $note->update(['color' => $color]);
     }
 
+    public function addConnector(int $fromNoteId, int $toNoteId): void
+    {
+        $fromNote = WorkshopNote::find($fromNoteId);
+        $toNote = WorkshopNote::find($toNoteId);
+        abort_unless($fromNote && $fromNote->canvas_id === $this->canvas->id, 403);
+        abort_unless($toNote && $toNote->canvas_id === $this->canvas->id, 403);
+
+        // Position at midpoint between the two elements
+        $midX = ($fromNote->position_x + $toNote->position_x) / 2;
+        $midY = ($fromNote->position_y + $toNote->position_y) / 2;
+
+        WorkshopNote::create([
+            'canvas_id' => $this->canvas->id,
+            'title' => '',
+            'content' => '',
+            'color' => 'blue',
+            'type' => 'connector',
+            'position_x' => $midX,
+            'position_y' => $midY,
+            'width' => 0,
+            'height' => 0,
+            'metadata' => [
+                'fromNoteId' => $fromNoteId,
+                'toNoteId' => $toNoteId,
+                'style' => 'solid',
+                'arrowHead' => 'end',
+            ],
+            'created_by_user_id' => Auth::id(),
+        ]);
+    }
+
     public function deleteWorkshopNote(int $noteId): void
     {
         $note = WorkshopNote::find($noteId);
         abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
+
+        // Cascade: delete connectors referencing this note
+        if ($note->type !== 'connector') {
+            $this->canvas->workshopNotes()
+                ->where('type', 'connector')
+                ->get()
+                ->filter(function (WorkshopNote $c) use ($noteId) {
+                    $meta = $c->metadata ?? [];
+                    return ($meta['fromNoteId'] ?? null) === $noteId
+                        || ($meta['toNoteId'] ?? null) === $noteId;
+                })
+                ->each->delete();
+        }
 
         $note->delete();
     }

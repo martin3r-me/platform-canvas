@@ -72,7 +72,7 @@ class WorkshopNote extends Model
 
     public static function allowedTypes(): array
     {
-        return ['note', 'text', 'section', 'shape'];
+        return ['note', 'text', 'section', 'shape', 'connector'];
     }
 
     public static function allowedShapes(): array
