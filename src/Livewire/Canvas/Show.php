@@ -4,16 +4,20 @@ namespace Platform\Canvas\Livewire\Canvas;
 
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Models\WorkshopNote;
 use Platform\Canvas\Services\AnalysisService;
 use Platform\Canvas\Services\CommentService;
+use Platform\Core\Services\ContextFileService;
 use Platform\Organization\Models\OrganizationContext;
 use Platform\Organization\Models\OrganizationEntityLink;
 
 class Show extends Component
 {
+    use WithFileUploads;
+
     public Canvas $canvas;
 
     public string $viewMode = 'list'; // 'list' | 'workshop'
@@ -22,6 +26,8 @@ class Show extends Component
     public ?int $commentBlockId = null;
     public ?int $replyToId = null;
     public ?int $filterBlockId = null;
+
+    public $workshopFile;
 
     public function mount(Canvas $canvas): void
     {
@@ -106,6 +112,54 @@ class Show extends Component
         $this->filterBlockId = $blockId;
     }
 
+    // ─── File Upload (Workshop) ────────────────────────────
+
+    public function updatedWorkshopFile(): void
+    {
+        $this->validate([
+            'workshopFile' => 'required|file|max:20480|mimes:jpg,jpeg,png,gif,webp,svg,mp4,webm,mov,avi',
+        ]);
+
+        $service = new ContextFileService();
+        $result = $service->uploadForContext(
+            $this->workshopFile,
+            Canvas::class,
+            $this->canvas->id,
+            [
+                'generate_variants' => false,
+                'user_id' => Auth::id(),
+                'team_id' => Auth::user()->currentTeam->id,
+            ]
+        );
+
+        $this->dispatch('workshop-file-uploaded', [
+            'contextFileId' => $result['id'],
+            'url' => $result['url'],
+            'mimeType' => $result['mime_type'],
+            'width' => $result['width'],
+            'height' => $result['height'],
+            'originalName' => $result['original_name'],
+        ]);
+
+        $this->workshopFile = null;
+    }
+
+    public function refreshFileUrl(int $contextFileId): array
+    {
+        $contextFile = \Platform\Core\Models\ContextFile::find($contextFileId);
+        abort_unless($contextFile && $contextFile->team_id === Auth::user()->currentTeam->id, 403);
+
+        $url = ContextFileService::generateUrl(
+            $contextFile->disk,
+            $contextFile->path,
+            $contextFile->token,
+            'core.context-files.show',
+            60
+        );
+
+        return ['url' => $url];
+    }
+
     // ─── View Mode ──────────────────────────────────────────
 
     public function toggleViewMode(): void
@@ -136,6 +190,16 @@ class Show extends Component
             'section' => ['width' => 500, 'height' => 400, 'color' => 'yellow', 'metadata' => null],
             'shape' => ['width' => 120, 'height' => 120, 'color' => 'blue', 'metadata' => ['shape' => 'rect']],
             'connector' => ['width' => 0, 'height' => 0, 'color' => 'blue', 'metadata' => null],
+            'kanban' => ['width' => 600, 'height' => 400, 'color' => 'blue', 'metadata' => [
+                'columns' => [
+                    ['id' => 'col_' . base_convert(time(), 10, 36) . 'a', 'title' => 'To Do', 'wipLimit' => 0, 'cards' => []],
+                    ['id' => 'col_' . base_convert(time(), 10, 36) . 'b', 'title' => 'In Progress', 'wipLimit' => 3, 'cards' => []],
+                    ['id' => 'col_' . base_convert(time(), 10, 36) . 'c', 'title' => 'Done', 'wipLimit' => 0, 'cards' => []],
+                ],
+            ]],
+            'image' => ['width' => 300, 'height' => 300, 'color' => 'yellow', 'metadata' => null],
+            'image_grid' => ['width' => 500, 'height' => 400, 'color' => 'yellow', 'metadata' => ['images' => [], 'columns' => 2, 'gap' => 4]],
+            'video' => ['width' => 480, 'height' => 300, 'color' => 'blue', 'metadata' => null],
             default => ['width' => 200, 'height' => 150, 'color' => 'yellow', 'metadata' => null],
         };
 
