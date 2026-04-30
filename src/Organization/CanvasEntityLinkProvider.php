@@ -111,10 +111,10 @@ class CanvasEntityLinkProvider implements EntityLinkProvider, HasMetricDefinitio
     public function metricDefinitions(): array
     {
         return [
-            'canvas_total'        => ['label' => 'Canvas (gesamt)', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count'],
-            'canvas_completed'    => ['label' => 'Canvas (abgeschlossen)', 'group' => 'canvas', 'direction' => 'up', 'unit' => 'count', 'pair' => 'canvas_total'],
-            'canvas_open'         => ['label' => 'Canvas (offen)', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count'],
-            'canvas_blocks_total' => ['label' => 'Bausteine', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count'],
+            'canvas_total'        => ['label' => 'Canvas (gesamt)', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count', 'dimension' => 'complexity', 'type' => 'stock'],
+            'canvas_completed'    => ['label' => 'Canvas (abgeschlossen)', 'group' => 'canvas', 'direction' => 'up', 'unit' => 'count', 'pair' => 'canvas_total', 'dimension' => 'throughput', 'type' => 'flow'],
+            'canvas_open'         => ['label' => 'Canvas (offen)', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count', 'dimension' => 'complexity', 'type' => 'stock'],
+            'canvas_blocks_total' => ['label' => 'Bausteine', 'group' => 'canvas', 'direction' => 'neutral', 'unit' => 'count', 'dimension' => 'complexity', 'type' => 'stock'],
         ];
     }
 }
