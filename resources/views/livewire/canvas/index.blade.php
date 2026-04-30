@@ -118,6 +118,7 @@
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Name</th>
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Typ</th>
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Tags</th>
+                                    <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Elemente</th>
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Erstellt von</th>
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Aktualisiert</th>
                                     <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide"></th>
@@ -157,6 +158,9 @@
                                             @endif
                                         </div>
                                         @endif
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        @include('canvas::livewire.canvas._workshop-icons', ['canvas' => $canvas])
                                     </td>
                                     <td class="px-4 py-2.5">
                                         <span class="text-[13px] text-gray-400">{{ $canvas->createdByUser?->name ?? '-' }}</span>
@@ -218,6 +222,7 @@
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Name</th>
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Typ</th>
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Tags</th>
+                                            <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Elemente</th>
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Erstellt von</th>
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">Aktualisiert</th>
                                             <th class="px-4 py-2.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide"></th>
@@ -257,6 +262,9 @@
                                                     @endif
                                                 </div>
                                                 @endif
+                                            </td>
+                                            <td class="px-4 py-2.5">
+                                                @include('canvas::livewire.canvas._workshop-icons', ['canvas' => $canvas])
                                             </td>
                                             <td class="px-4 py-2.5">
                                                 <span class="text-[13px] text-gray-400">{{ $canvas->createdByUser?->name ?? '-' }}</span>

@@ -255,7 +255,7 @@
 
         @if($viewMode === 'list')
         {{-- ═══ LIST VIEW (unchanged) ═══ --}}
-        <div x-data="blockNav()" x-init="init()">
+        <div wire:key="view-list" x-data="blockNav()" x-init="init()">
             {{-- Block Navigation --}}
             <div class="sticky top-0 z-20 border-b border-gray-200/40 bg-white/95 backdrop-blur-sm">
                 <div class="px-4 sm:px-6 overflow-x-auto">
@@ -384,7 +384,8 @@
             }
         @endphp
 
-        <div wire:ignore
+        <div wire:key="view-workshop"
+             wire:ignore
              x-data="workshopBoard({
                 notes: {{ Js::from($workshopNotes) }},
                 canvasBlocks: {{ Js::from(collect($blockDefs)->map(fn($d) => ['key' => $d['key'], 'label' => $d['label'] ?? $d['key'], 'id' => $blocksById[$d['key']]?->id ?? null])->values()) }},

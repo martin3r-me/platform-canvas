@@ -67,7 +67,17 @@ class Index extends Component
         $query = Canvas::forTeam($teamId)
             ->visibleTo($user)
             ->with(['canvasType', 'createdByUser', 'tags', 'contextColors'])
-            ->withCount('buildingBlocks');
+            ->withCount('buildingBlocks')
+            ->withCount([
+                'workshopNotes as ws_notes_count' => fn ($q) => $q->where('type', 'note'),
+                'workshopNotes as ws_text_count' => fn ($q) => $q->where('type', 'text'),
+                'workshopNotes as ws_image_count' => fn ($q) => $q->whereIn('type', ['image', 'image_grid']),
+                'workshopNotes as ws_video_count' => fn ($q) => $q->where('type', 'video'),
+                'workshopNotes as ws_kanban_count' => fn ($q) => $q->where('type', 'kanban'),
+                'workshopNotes as ws_section_count' => fn ($q) => $q->where('type', 'section'),
+                'workshopNotes as ws_shape_count' => fn ($q) => $q->where('type', 'shape'),
+                'workshopNotes as ws_connector_count' => fn ($q) => $q->where('type', 'connector'),
+            ]);
 
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
