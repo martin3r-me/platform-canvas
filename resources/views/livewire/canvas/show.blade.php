@@ -395,6 +395,11 @@
              :class="isFullscreen ? 'workshop-fullscreen' : 'h-[calc(100vh-220px)]'"
              style="background: #eef0f4;"
         >
+            {{-- Board Presence (visible in fullscreen) --}}
+            <div class="workshop-presence">
+                @livewire('core.page-presence', key('workshop-presence'))
+            </div>
+
             {{-- Zoom Controls (outside board, not affected by transform) --}}
             <div class="workshop-zoom-controls">
                 <button x-on:click="zoomIn()" title="Zoom In">
