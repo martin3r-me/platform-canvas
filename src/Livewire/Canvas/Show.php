@@ -6,6 +6,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use Platform\Canvas\Events\WorkshopNoteChanged;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Models\WorkshopNote;
 use Platform\Canvas\Services\AnalysisService;
@@ -35,6 +36,46 @@ class Show extends Component
         abort_unless($canvas->isVisibleTo(Auth::user()), 403);
         $canvas->loadMissing('canvasType');
         $this->canvas = $canvas;
+    }
+
+    public function getListeners(): array
+    {
+        $listeners = [];
+
+        try {
+            if (auth()->check() && $this->canvas) {
+                $canvasId = $this->canvas->id;
+                $listeners["echo-private:canvas.workshop.{$canvasId},.note.changed"] = 'onNoteChanged';
+            }
+        } catch (\Throwable $e) {
+            // Fail silently
+        }
+
+        return $listeners;
+    }
+
+    public function onNoteChanged($payload): void
+    {
+        if (($payload['senderId'] ?? null) === Auth::id()) {
+            return;
+        }
+
+        $this->dispatch('workshop-note-changed', $payload);
+    }
+
+    private function broadcastNoteChange(string $action, int $noteId, array $data = []): void
+    {
+        try {
+            WorkshopNoteChanged::dispatch(
+                $this->canvas->id,
+                Auth::id(),
+                $action,
+                $noteId,
+                $data,
+            );
+        } catch (\Throwable $e) {
+            // Broadcasting failure should not break the CRUD operation
+        }
     }
 
     public function toggleVisibility(): void
@@ -203,7 +244,7 @@ class Show extends Component
             default => ['width' => 200, 'height' => 150, 'color' => 'yellow', 'metadata' => null],
         };
 
-        WorkshopNote::create([
+        $note = WorkshopNote::create([
             'canvas_id' => $this->canvas->id,
             'title' => '',
             'content' => '',
@@ -215,6 +256,19 @@ class Show extends Component
             'height' => $defaults['height'],
             'metadata' => $defaults['metadata'],
             'created_by_user_id' => Auth::id(),
+        ]);
+
+        $this->broadcastNoteChange('created', $note->id, [
+            'id' => $note->id,
+            'title' => $note->title,
+            'content' => $note->content ?? '',
+            'color' => $note->color,
+            'type' => $note->type ?? 'note',
+            'x' => $note->position_x,
+            'y' => $note->position_y,
+            'width' => $note->width,
+            'height' => $note->height,
+            'metadata' => $note->metadata,
         ]);
     }
 
@@ -240,6 +294,13 @@ class Show extends Component
             'height' => isset($pos['height']) ? (int) $pos['height'] : $note->height,
             'building_block_id' => $blockId,
         ]);
+
+        $this->broadcastNoteChange('moved', $noteId, [
+            'x' => $note->position_x,
+            'y' => $note->position_y,
+            'width' => $note->width,
+            'height' => $note->height,
+        ]);
     }
 
     public function updateNoteText(int $noteId, string $title, string $content): void
@@ -248,6 +309,11 @@ class Show extends Component
         abort_unless($note && $note->canvas_id === $this->canvas->id, 403);
 
         $note->update([
+            'title' => $title,
+            'content' => $content,
+        ]);
+
+        $this->broadcastNoteChange('text_updated', $noteId, [
             'title' => $title,
             'content' => $content,
         ]);
@@ -261,6 +327,10 @@ class Show extends Component
         if (!in_array($color, WorkshopNote::allowedColors())) return;
 
         $note->update(['color' => $color]);
+
+        $this->broadcastNoteChange('color_updated', $noteId, [
+            'color' => $color,
+        ]);
     }
 
     public function addConnector(int $fromNoteId, int $toNoteId): void
@@ -274,7 +344,7 @@ class Show extends Component
         $midX = ($fromNote->position_x + $toNote->position_x) / 2;
         $midY = ($fromNote->position_y + $toNote->position_y) / 2;
 
-        WorkshopNote::create([
+        $connector = WorkshopNote::create([
             'canvas_id' => $this->canvas->id,
             'title' => '',
             'content' => '',
@@ -291,6 +361,19 @@ class Show extends Component
                 'arrowHead' => 'end',
             ],
             'created_by_user_id' => Auth::id(),
+        ]);
+
+        $this->broadcastNoteChange('created', $connector->id, [
+            'id' => $connector->id,
+            'title' => '',
+            'content' => '',
+            'color' => 'blue',
+            'type' => 'connector',
+            'x' => $connector->position_x,
+            'y' => $connector->position_y,
+            'width' => 0,
+            'height' => 0,
+            'metadata' => $connector->metadata,
         ]);
     }
 
@@ -309,10 +392,15 @@ class Show extends Component
                     return ($meta['fromNoteId'] ?? null) === $noteId
                         || ($meta['toNoteId'] ?? null) === $noteId;
                 })
-                ->each->delete();
+                ->each(function (WorkshopNote $c) {
+                    $this->broadcastNoteChange('deleted', $c->id);
+                    $c->delete();
+                });
         }
 
         $note->delete();
+
+        $this->broadcastNoteChange('deleted', $noteId);
     }
 
     public function getWorkshopNotes(): array
@@ -343,6 +431,10 @@ class Show extends Component
 
         $note->update([
             'metadata' => array_merge($note->metadata ?? [], $meta),
+        ]);
+
+        $this->broadcastNoteChange('metadata_updated', $noteId, [
+            'metadata' => $note->fresh()->metadata,
         ]);
     }
 
@@ -375,6 +467,8 @@ class Show extends Component
         ]);
 
         $note->delete();
+
+        $this->broadcastNoteChange('deleted', $noteId);
     }
 
     #[Computed]
