@@ -46,6 +46,16 @@
         'budget' => 'heroicon-o-currency-euro',
         'communication' => 'heroicon-o-chat-bubble-left-right',
         'governance' => 'heroicon-o-building-library',
+        // COREFIT Process blocks
+        'target_description' => 'heroicon-o-flag',
+        'value_proposition' => 'heroicon-o-gift',
+        'cost_analysis' => 'heroicon-o-calculator',
+        'risk_assessment' => 'heroicon-o-shield-exclamation',
+        'improvement_levers' => 'heroicon-o-wrench-screwdriver',
+        'action_plan' => 'heroicon-o-clipboard-document-check',
+        'standardization_notes' => 'heroicon-o-document-check',
+        'process_landscape' => 'heroicon-o-map',
+        'corefit_classification_notes' => 'heroicon-o-adjustments-horizontal',
     ];
     $icon = $iconMap[$blockKey] ?? 'heroicon-o-square-3-stack-3d';
 @endphp

@@ -26,6 +26,7 @@ class CanvasTypeSeeder extends Seeder
             $this->swotType(),
             $this->projectCanvasType(),
             $this->leanCanvasType(),
+            $this->corefitProcessType(),
         ];
     }
 
@@ -524,6 +525,131 @@ class CanvasTypeSeeder extends Seeder
                     'cost_structure' => 'cost',
                     'revenue_streams' => 'rev',
                 ],
+            ],
+            'analysis_config' => [
+                'strategy' => 'completeness',
+                'thresholds' => ['good' => 80, 'partial' => 50, 'minimal' => 1],
+            ],
+        ];
+    }
+
+    private function corefitProcessType(): array
+    {
+        return [
+            'key' => 'corefit-process',
+            'name' => 'COREFIT Prozess-Workshop',
+            'description' => 'Workshop-Canvas für die COREFIT-Analyse eines Prozesses. 9 Dimensionen zur strategischen Bewertung und Optimierung.',
+            'purpose' => 'Use when running a COREFIT workshop on a process. Provides structured blocks for target description, value proposition, cost analysis, risk assessment, improvement levers, action plan, standardization, process landscape, and classification notes.',
+            'methodology' => 'COREFIT Framework',
+            'icon' => 'heroicon-o-adjustments-horizontal',
+            'origin' => 'system',
+            'is_active' => true,
+            'entry_types' => ['text'],
+            'block_definitions' => [
+                [
+                    'key' => 'target_description',
+                    'label' => 'Zielbeschreibung',
+                    'description' => 'Was ist das Ziel dieses Prozesses? Was soll erreicht werden?',
+                    'position' => 1,
+                    'guiding_questions' => [
+                        'Was ist das gewünschte Ergebnis des Prozesses?',
+                        'Welchen Beitrag leistet der Prozess zur Wertschöpfung?',
+                        'Wie sieht der Soll-Zustand aus?',
+                    ],
+                ],
+                [
+                    'key' => 'value_proposition',
+                    'label' => 'Wertversprechen',
+                    'description' => 'Welchen Wert liefert der Prozess für den Kunden oder die Organisation?',
+                    'position' => 2,
+                    'guiding_questions' => [
+                        'Welches Problem löst der Prozess für den Kunden?',
+                        'Was ist der konkrete Nutzen für den Empfänger?',
+                        'Warum ist dieser Prozess wichtig?',
+                    ],
+                ],
+                [
+                    'key' => 'cost_analysis',
+                    'label' => 'Kostenanalyse',
+                    'description' => 'Welche Kosten verursacht der Prozess? Wo liegen die größten Kostentreiber?',
+                    'position' => 3,
+                    'guiding_questions' => [
+                        'Was sind die größten Kostentreiber?',
+                        'Welche Kosten sind fix, welche variabel?',
+                        'Wo gibt es Einsparpotenzial?',
+                    ],
+                ],
+                [
+                    'key' => 'risk_assessment',
+                    'label' => 'Risikobewertung',
+                    'description' => 'Welche Risiken bestehen im Prozess? Was kann schiefgehen?',
+                    'position' => 4,
+                    'guiding_questions' => [
+                        'Was sind die größten Risiken im Prozess?',
+                        'Was passiert, wenn der Prozess ausfällt?',
+                        'Welche Abhängigkeiten existieren?',
+                    ],
+                ],
+                [
+                    'key' => 'improvement_levers',
+                    'label' => 'Verbesserungshebel',
+                    'description' => 'Welche konkreten Hebel können zur Verbesserung angesetzt werden?',
+                    'position' => 5,
+                    'guiding_questions' => [
+                        'Wo sind die größten Verbesserungspotenziale?',
+                        'Welche Quick Wins gibt es?',
+                        'Welche Automatisierungsmöglichkeiten bestehen?',
+                    ],
+                ],
+                [
+                    'key' => 'action_plan',
+                    'label' => 'Maßnahmenplan',
+                    'description' => 'Welche konkreten Maßnahmen werden ergriffen? Wer ist verantwortlich?',
+                    'position' => 6,
+                    'guiding_questions' => [
+                        'Welche Maßnahmen sind priorisiert?',
+                        'Wer ist für die Umsetzung verantwortlich?',
+                        'Bis wann sollen Maßnahmen umgesetzt sein?',
+                    ],
+                ],
+                [
+                    'key' => 'standardization_notes',
+                    'label' => 'Standardisierung',
+                    'description' => 'Wie standardisiert ist der Prozess? Welche Standards fehlen?',
+                    'position' => 7,
+                    'guiding_questions' => [
+                        'Welche Prozessschritte sind bereits standardisiert?',
+                        'Wo gibt es Abweichungen von Standards?',
+                        'Welche Dokumentation existiert?',
+                    ],
+                ],
+                [
+                    'key' => 'process_landscape',
+                    'label' => 'Prozesslandkarte',
+                    'description' => 'Wie ordnet sich der Prozess in die Gesamtlandschaft ein? Welche Schnittstellen bestehen?',
+                    'position' => 8,
+                    'guiding_questions' => [
+                        'Welche vor- und nachgelagerten Prozesse gibt es?',
+                        'Welche Schnittstellen existieren?',
+                        'Wo gibt es Medienbrüche?',
+                    ],
+                ],
+                [
+                    'key' => 'corefit_classification_notes',
+                    'label' => 'COREFIT Klassifizierung',
+                    'description' => 'Begründung der COREFIT-Einstufung: Warum sind Steps Core, Context oder No Fit?',
+                    'position' => 9,
+                    'guiding_questions' => [
+                        'Welche Kriterien wurden für die Klassifizierung angelegt?',
+                        'Welche Steps gehören wirklich zum Kern?',
+                        'Was kann eliminiert oder ausgelagert werden?',
+                    ],
+                ],
+            ],
+            'layout' => [
+                'type' => 'grid',
+                'columns' => 3,
+                'rows' => 3,
             ],
             'analysis_config' => [
                 'strategy' => 'completeness',
