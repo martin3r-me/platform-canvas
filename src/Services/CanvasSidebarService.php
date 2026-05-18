@@ -19,14 +19,14 @@ class CanvasSidebarService
     {
         $teamId = $user->currentTeam->id;
 
-        $myCanvases = Canvas::query()
+        $myCanvases = Canvas::withStale()
             ->with(['canvasType', 'contextColors'])
             ->where('team_id', $teamId)
             ->where('created_by_user_id', $user->id)
             ->orderBy('name')
             ->get();
 
-        $allCanvases = Canvas::query()
+        $allCanvases = Canvas::withStale()
             ->with(['canvasType', 'contextColors'])
             ->where('team_id', $teamId)
             ->visibleTo($user)
