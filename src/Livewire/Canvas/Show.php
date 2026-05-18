@@ -36,6 +36,9 @@ class Show extends Component
         abort_unless($canvas->isVisibleTo(Auth::user()), 403);
         $canvas->loadMissing('canvasType');
         $this->canvas = $canvas;
+
+        // Staleness-Tracking
+        $this->canvas->recordView();
     }
 
     public function getListeners(): array

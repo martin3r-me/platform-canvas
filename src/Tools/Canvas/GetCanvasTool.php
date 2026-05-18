@@ -46,6 +46,9 @@ class GetCanvasTool extends AbstractCanvasTool
             return ToolResult::error('NOT_FOUND', 'Canvas nicht gefunden (oder kein Zugriff).');
         }
 
+        // Staleness-Tracking: View aufzeichnen
+        $canvas->recordView();
+
         $canvasData = $canvas->toCanvasArray();
 
         $canvasData['canvas']['visibility'] = $canvas->visibility;

@@ -28,6 +28,7 @@ class ListCanvasesTool extends AbstractCanvasTool
                     'team_id' => ['type' => 'integer', 'description' => 'Optional: Team-ID. Default: aktuelles Team aus Kontext.'],
                     'status' => ['type' => 'string', 'enum' => Canvas::STATUSES, 'description' => 'Optional: Filter nach Status.'],
                     'type_key' => ['type' => 'string', 'description' => 'Optional: Filter nach Canvas-Typ Key.'],
+                    'include_stale' => ['type' => 'boolean', 'description' => 'Optional: Wenn true, werden auch stale (lange nicht angesehene) Canvases angezeigt. Default: false.'],
                 ],
             ]
         );
@@ -40,6 +41,11 @@ class ListCanvasesTool extends AbstractCanvasTool
             ->withCount('buildingBlocks', 'snapshots')
             ->forTeam($teamId)
             ->visibleTo($context->user);
+
+        // Stale Records einblenden wenn gewuenscht
+        if (!empty($arguments['include_stale'])) {
+            $query->withStale();
+        }
 
         if (isset($arguments['status'])) {
             $query->byStatus($arguments['status']);

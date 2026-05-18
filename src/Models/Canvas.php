@@ -12,12 +12,15 @@ use Platform\ActivityLog\Traits\LogsActivity;
 use Platform\Core\Models\User;
 use Platform\Core\Traits\HasColors;
 use Platform\Core\Traits\HasTags;
+use Platform\Core\Traits\TracksLastViewed;
 use Platform\Core\Contracts\AgendaRenderable;
 use Symfony\Component\Uid\UuidV7;
 
 class Canvas extends Model implements AgendaRenderable
 {
-    use LogsActivity, SoftDeletes, HasTags, HasColors;
+    use LogsActivity, SoftDeletes, HasTags, HasColors, TracksLastViewed;
+
+    protected int $stalenessThresholdDays = 180;
 
     // Visibility-Konstanten
     public const VISIBILITY_TEAM = 'team';
