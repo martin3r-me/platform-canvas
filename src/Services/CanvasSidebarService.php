@@ -8,7 +8,7 @@ use Platform\Canvas\Models\CanvasType;
 use Platform\Core\Models\User;
 use Platform\Organization\Models\OrganizationContext;
 use Platform\Organization\Models\OrganizationEntity;
-use Platform\Organization\Models\OrganizationEntityLink;
+use Platform\Organization\Services\EntityDimensionBridge;
 
 class CanvasSidebarService
 {
@@ -59,12 +59,8 @@ class CanvasSidebarService
             }
         }
 
-        // OrganizationEntityLink
-        $entityLinks = OrganizationEntityLink::query()
-            ->whereIn('linkable_type', $contextMorphTypes)
-            ->whereIn('linkable_id', $canvasIds)
-            ->with(['entity.type'])
-            ->get();
+        // DimensionLink entity dimension
+        $entityLinks = EntityDimensionBridge::linksForLinkables($contextMorphTypes, $canvasIds);
 
         foreach ($entityLinks as $link) {
             $entityId = $link->entity_id;

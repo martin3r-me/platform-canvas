@@ -13,7 +13,7 @@ use Platform\Canvas\Services\AnalysisService;
 use Platform\Canvas\Services\CommentService;
 use Platform\Core\Services\ContextFileService;
 use Platform\Organization\Models\OrganizationContext;
-use Platform\Organization\Models\OrganizationEntityLink;
+use Platform\Organization\Services\EntityDimensionBridge;
 
 class Show extends Component
 {
@@ -568,11 +568,7 @@ class Show extends Component
                 }
             }
 
-            $entityLinks = OrganizationEntityLink::query()
-                ->whereIn('linkable_type', $morphTypes)
-                ->where('linkable_id', $this->canvas->id)
-                ->with(['entity.type'])
-                ->get();
+            $entityLinks = EntityDimensionBridge::linksForLinkables($morphTypes, [$this->canvas->id]);
 
             foreach ($entityLinks as $link) {
                 if ($link->entity) {
