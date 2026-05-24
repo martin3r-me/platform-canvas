@@ -6,7 +6,6 @@ use Illuminate\Support\Collection;
 use Platform\Canvas\Models\Canvas;
 use Platform\Canvas\Models\CanvasType;
 use Platform\Core\Models\User;
-use Platform\Organization\Models\OrganizationContext;
 use Platform\Organization\Models\OrganizationEntity;
 use Platform\Organization\Services\EntityDimensionBridge;
 
@@ -42,24 +41,6 @@ class CanvasSidebarService
         $entityCanvasMap = [];
         $linkedCanvasIds = [];
 
-        // OrganizationContext
-        $contexts = OrganizationContext::query()
-            ->whereIn('contextable_type', $contextMorphTypes)
-            ->whereIn('contextable_id', $canvasIds)
-            ->where('is_active', true)
-            ->with(['organizationEntity.type'])
-            ->get();
-
-        foreach ($contexts as $ctx) {
-            $entityId = $ctx->organization_entity_id;
-            $canvasId = $ctx->contextable_id;
-            if ($entityId) {
-                $entityCanvasMap[$entityId][] = $canvasId;
-                $linkedCanvasIds[] = $canvasId;
-            }
-        }
-
-        // DimensionLink entity dimension
         $entityLinks = EntityDimensionBridge::linksForLinkables($contextMorphTypes, $canvasIds);
 
         foreach ($entityLinks as $link) {
